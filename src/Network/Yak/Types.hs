@@ -12,7 +12,8 @@ module Network.Yak.Types
     Raw(..),
     Render(..),
     PList(..),
-    params
+    params,
+    phead
 )
 where
 
@@ -44,10 +45,17 @@ instance Render a => Render (NonEmpty a) where
     render (x :| []) = render x
     render (x :| xs) = render (x : xs)
 
+instance Render a => Render (Maybe a) where
+    render (Just x) = render x
+    render Nothing  = ""
+
 -- | Heterogenous list of parameters. Every element must be renderable!
 data PList a where
     PNil  :: PList '[]
     PCons :: forall x xs. Render x => x -> PList xs -> PList (x ': xs)
+
+phead :: PList (x ': xs) -> x
+phead (PCons x _) = x
 
 -- | Transform parameter list into list of 'ByteString's by rendering each
 -- element.
