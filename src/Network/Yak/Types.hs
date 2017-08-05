@@ -13,7 +13,7 @@ module Network.Yak.Types
     Render(..),
     PList(..),
     params,
-    phead
+    phead,
 )
 where
 

@@ -56,5 +56,6 @@ quitMessage = lens (phead . rawParams) go
 quit :: Text -> Quit
 quit x = Raw Nothing (PCons x PNil)
 
--- | A PrivMsg has two parameters, one is the receiver, the other is the message
-type PrivMsg = Raw "PRIVMSG" '[Text, Text]
+-- | A PrivMsg has two parameters, one is the non-empty lists of receivers, the
+-- other is the message
+type PrivMsg = Raw "PRIVMSG" '[NonEmpty Text, Text]
