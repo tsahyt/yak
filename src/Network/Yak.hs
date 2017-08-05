@@ -29,6 +29,9 @@ emit Raw{..} = fromMaybe "" (mappend ":" <$> rawPrefix)
 -- | A Join command must have at least one channel to join
 type Join = Raw "JOIN" '[NonEmpty Text]
 
+join :: NonEmpty Text -> Join
+join xs = Raw Nothing (PCons xs PNil)
+
 joinChannels :: Lens' Join (NonEmpty Text)
 joinChannels = lens (phead . rawParams) go
     where go x t = x { rawParams = PCons t PNil }
@@ -40,12 +43,18 @@ partChannels :: Lens' Part (NonEmpty Text)
 partChannels = lens (phead . rawParams) go
     where go x t = x { rawParams = PCons t PNil }
 
+part :: NonEmpty Text -> Part
+part xs = Raw Nothing (PCons xs PNil)
+
 -- | Quitting needs a quit message
 type Quit = Raw "QUIT" '[Text]
 
 quitMessage :: Lens' Quit Text
 quitMessage = lens (phead . rawParams) go
     where go x t = x { rawParams = PCons t PNil }
+
+quit :: Text -> Quit
+quit x = Raw Nothing (PCons x PNil)
 
 -- | A PrivMsg has two parameters, one is the receiver, the other is the message
 type PrivMsg = Raw "PRIVMSG" '[Text, Text]
