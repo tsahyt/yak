@@ -20,7 +20,8 @@ library
   build-depends:       base >= 4.7 && < 5,
                        text,
                        bytestring,
-                       lens
+                       lens,
+                       attoparsec
   ghc-options:         -Wall -Werror
   default-language:    Haskell2010
 

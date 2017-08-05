@@ -17,6 +17,9 @@ import Data.Monoid
 import Data.Proxy
 
 import qualified Data.ByteString.Char8 as B
+import qualified Data.Text as T
+import qualified Data.List.NonEmpty as N
+import qualified Data.Attoparsec.ByteString.Char8 as A
 
 -- | Encode an IRC message to a 'ByteString', ready for the network
 emit :: forall c p. KnownSymbol c => Raw c p -> ByteString
@@ -35,6 +38,12 @@ join xs = Raw Nothing (PCons xs PNil)
 joinChannels :: Lens' Join (NonEmpty Text)
 joinChannels = lens (phead . rawParams) go
     where go x t = x { rawParams = PCons t PNil }
+
+parseJoin :: A.Parser Join
+parseJoin = do
+    _  <- A.string "JOIN "
+    cs <- A.sepBy1 (A.many1 $ A.satisfy A.isAlpha_ascii) (A.char ',')
+    pure $ join (N.fromList $ map T.pack cs)
 
 -- | A Part command must have at least one channel to part from
 type Part = Raw "PART" '[NonEmpty Text]
