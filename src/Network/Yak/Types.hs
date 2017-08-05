@@ -22,6 +22,8 @@ import Data.List (intersperse)
 import Data.List.NonEmpty (NonEmpty(..))
 import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)
+import GHC.TypeLits
+import Data.Kind
 
 import qualified Data.Text.Encoding as E
 
@@ -29,8 +31,6 @@ import qualified Data.Text.Encoding as E
 data Raw command params = Raw
     { rawPrefix  :: Maybe ByteString
     , rawParams  :: PList params }
-
-data SomeRaw = SomeRaw (forall c p. Raw c p)
 
 -- | Class for any kind of IRC parameter that can be rendered to 'ByteString'
 class Render a where
