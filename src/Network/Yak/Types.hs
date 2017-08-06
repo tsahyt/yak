@@ -2,6 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -16,6 +17,8 @@
 
 module Network.Yak.Types
 (
+    Prefix(..),
+    Host(..),
     Msg(..),
     vacant,
     (<:>),
@@ -47,10 +50,22 @@ import qualified Data.Text.Encoding as E
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as B
 
+data Prefix 
+    = PrefixServer Text
+    | PrefixUser Host
+    deriving (Eq, Show, Read, Ord)
+
+data Host = Host
+    { hostNick :: Text
+    , hostUser :: Maybe Text
+    , hostHost :: Maybe Text
+    }
+    deriving (Eq, Show, Read, Ord)
+
 -- | Proxy type for holding IRC messages
 data Msg command params = Msg
-    { _prefix  :: Maybe ByteString
-    , _params  :: PList params }
+    { msgPrefix  :: Maybe Prefix
+    , msgParams  :: PList params }
 
 vacant :: Msg c '[]
 vacant = Msg Nothing PNil
@@ -112,7 +127,7 @@ instance Parameter Word where
     render = render . T.pack . show
     seize  = decimal
 
--- | Heterogenous list of parameters.
+-- | Heterogeneous list of parameters.
 data PList a where
     PNil  :: PList '[]
     PCons :: forall x xs. x -> PList xs -> PList (x ': xs)
@@ -144,4 +159,5 @@ instance (Parameter x, Parameter x')
     _4 = lens (view (ptail . ptail . ptail . phead)) 
               (flip (set (ptail . ptail . ptail . phead)))
 
-makeLenses ''Msg
+makeFields ''Msg
+makeFields ''Host
