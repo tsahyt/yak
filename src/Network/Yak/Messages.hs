@@ -50,4 +50,4 @@ type Join = Msg "JOIN" '[NonEmpty Channel]
 type Part = Msg "PART" '[NonEmpty Channel]
 type Quit = Msg "QUIT" '[Message]
 
-type PrivMsg = Msg "PRIVMSG" '[NonEmpty Text, Message]
+type PrivMsg = Msg "PRIVMSG" '[NonEmpty Channel, Message]
