@@ -4,6 +4,8 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Network.Yak where
 
 import Control.Applicative
@@ -24,10 +26,10 @@ import qualified Data.Attoparsec.ByteString.Char8 as A
 
 -- | Encode an IRC message to a 'ByteString', ready for the network
 emit :: forall c p. KnownSymbol c => Raw c p -> ByteString
-emit Raw{..} = fromMaybe "" (mappend ":" <$> rawPrefix)
+emit Raw{..} = fromMaybe "" (mappend ":" <$> _prefix)
             <> (B.pack $ symbolVal (Proxy @c))
             <> " "
-            <> B.unwords (params rawParams)
+            <> B.unwords (renderParams _params)
             <> "\n"
 
 -- | A Join command must have at least one channel to join
@@ -36,9 +38,11 @@ type Join = Raw "JOIN" '[NonEmpty Text]
 join :: NonEmpty Text -> Join
 join xs = Raw Nothing (PCons xs PNil)
 
-joinChannels :: Lens' Join (NonEmpty Text)
-joinChannels = lens (phead . rawParams) go
-    where go x t = x { rawParams = PCons t PNil }
+class HasChannels s where
+    channels :: Lens' s (NonEmpty Text)
+
+instance HasChannels Join where
+    channels = lens (view (params . _1)) (flip (set (params . _1)))
 
 parseJoin :: A.Parser Join
 parseJoin = do
@@ -49,12 +53,11 @@ parseJoin = do
 -- | A Part command must have at least one channel to part from
 type Part = Raw "PART" '[NonEmpty Text]
 
-partChannels :: Lens' Part (NonEmpty Text)
-partChannels = lens (phead . rawParams) go
-    where go x t = x { rawParams = PCons t PNil }
-
 part :: NonEmpty Text -> Part
 part xs = Raw Nothing (PCons xs PNil)
+
+instance HasChannels Part where
+    channels = lens (view (params . _1)) (flip (set (params . _1)))
 
 parsePart :: A.Parser Part
 parsePart = do
@@ -65,12 +68,14 @@ parsePart = do
 -- | Quitting needs a quit message
 type Quit = Raw "QUIT" '[Text]
 
-quitMessage :: Lens' Quit Text
-quitMessage = lens (phead . rawParams) go
-    where go x t = x { rawParams = PCons t PNil }
-
 quit :: Text -> Quit
 quit x = Raw Nothing (PCons x PNil)
+
+class HasMessage s where
+    message :: Lens' s Text
+
+instance HasMessage Quit where
+    message = lens (view (params . _1)) (flip (set (params . _1)))
 
 parseQuit :: A.Parser Quit
 parseQuit = do
@@ -82,6 +87,9 @@ parseQuit = do
 -- other is the message
 type PrivMsg = Raw "PRIVMSG" '[NonEmpty Text, Text]
 
+instance HasMessage PrivMsg where
+    message = lens (view (params . _2)) (flip (set (params . _2)))
+
 data CoreMsg
     = MJoin Join
     | MPart Part
@@ -92,8 +100,3 @@ fetch = A.maybeResult . A.parse go
     where go = MJoin <$> parseJoin
            <|> MPart <$> parsePart
            <|> MQuit <$> parseQuit
-
-foo = case fetch "QUIT foo\n" of
-    Nothing -> return ()
-    Just (MJoin r) -> putStrLn "join!"
-    Just (MQuit r) -> putStrLn "quit!"
