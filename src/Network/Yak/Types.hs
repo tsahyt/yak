@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -13,9 +14,10 @@
 module Network.Yak.Types
 (
     Raw(..),
-    Render(..),
+    SomeRaw(..),
+    withSomeRaw,
+    Parameter(..),
     PList(..),
-    renderParams,
     phead,
     ptail,
     params,
@@ -23,68 +25,99 @@ module Network.Yak.Types
 )
 where
 
+import Control.Applicative
 import Control.Lens
 import Data.List (intersperse)
-import Data.List.NonEmpty (NonEmpty(..))
+import Data.List.NonEmpty (NonEmpty(..), fromList)
 import Data.ByteString.Char8 (ByteString)
+import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
+import Data.Proxy
+import Data.Monoid
 import GHC.TypeLits
 import Data.Kind
 
 import qualified Data.Text.Encoding as E
+import qualified Data.Text as T
 
 -- | Proxy type for holding IRC messages
 data Raw command params = Raw
     { _prefix  :: Maybe ByteString
     , _params  :: PList params }
 
+data SomeRaw where
+    SomeRaw :: KnownSymbol c => Raw c p -> SomeRaw
+
+withSomeRaw :: SomeRaw -> (forall c p. KnownSymbol c => Raw c p -> r) -> r
+withSomeRaw (SomeRaw r) f = f r
+
 -- | Class for any kind of IRC parameter that can be rendered to 'ByteString'
-class Render a where
+-- and read from a 'ByteString'
+class Parameter a where
     render :: a -> ByteString
+    seize  :: Parser a
 
 -- | Text is encoded as UTF-8
-instance Render Text where
+instance Parameter Text where
     render = E.encodeUtf8
+    seize  = T.pack <$> many1 (satisfy isAlpha_ascii)
 
 -- | Lists are comma separated
-instance Render a => Render [a] where
+instance Parameter a => Parameter [a] where
     render = mconcat . intersperse "," . map render
+    seize  = sepBy seize (char ',')
 
-instance Render a => Render (NonEmpty a) where
+instance Parameter a => Parameter (NonEmpty a) where
     render (x :| []) = render x
     render (x :| xs) = render (x : xs)
+    
+    seize = fromList <$> sepBy1 seize (char ',')
 
-instance Render a => Render (Maybe a) where
+instance Parameter a => Parameter (Maybe a) where
     render (Just x) = render x
     render Nothing  = ""
 
--- | Heterogenous list of parameters. Every element must be renderable!
+    seize = optional seize
+
+instance (Parameter x, Parameter (PList xs)) 
+      => Parameter (PList (x ': xs)) where
+    render (PCons x xs) = render x <> " " <> render xs
+    seize = PCons <$> seize <*> seize
+
+instance Parameter (PList '[]) where
+    render _ = ""
+    seize  = pure PNil
+
+-- | Heterogenous list of parameters.
 data PList a where
     PNil  :: PList '[]
-    PCons :: forall x xs. Render x => x -> PList xs -> PList (x ': xs)
+    PCons :: forall x xs. x -> PList xs -> PList (x ': xs)
 
-phead :: Render x' => Lens (PList (x ': xs)) (PList (x' ': xs)) x x'
+phead :: Parameter x' => Lens (PList (x ': xs)) (PList (x' ': xs)) x x'
 phead = lens (\(PCons x _) -> x) (\(PCons _ xs) x -> PCons x xs)
 
 ptail :: Lens (PList (x ': xs)) (PList (x ': xs')) (PList xs) (PList xs')
 ptail = lens (\(PCons _ xs) -> xs) (\(PCons x _) xs -> PCons x xs)
 
-instance (Render x, Render x') => Field1 (PList (x ': xs)) (PList (x' ': xs)) x x' where
+instance (Parameter x, Parameter x') 
+      => Field1 (PList (x ': xs)) (PList (x' ': xs)) x x' where
     _1 = lens (view phead) (flip (set phead))
 
-instance (Render x, Render x') => Field2 (PList (a ': x ': xs)) (PList (a ': x' ': xs)) x x' where
+instance (Parameter x, Parameter x') 
+      => Field2 (PList (a ': x ': xs)) (PList (a ': x' ': xs)) x x' where
     _2 = lens (view (ptail . phead)) (flip (set (ptail . phead)))
 
-instance (Render x, Render x') => Field3 (PList (a ': b ': x ': xs)) (PList (a ': b ': x' ': xs)) x x' where
-    _3 = lens (view (ptail . ptail . phead)) (flip (set (ptail . ptail . phead)))
+instance (Parameter x, Parameter x') 
+      => Field3 (PList (a ': b ': x ': xs)) (PList (a ': b ': x' ': xs)) x x' 
+      where
+    _3 = lens (view (ptail . ptail . phead)) 
+              (flip (set (ptail . ptail . phead)))
 
-instance (Render x, Render x') => Field4 (PList (a ': b ': c ': x ': xs)) (PList (a ': b ': c ': x' ': xs)) x x' where
-    _4 = lens (view (ptail . ptail . ptail . phead)) (flip (set (ptail . ptail . ptail . phead)))
-
--- | Transform parameter list into list of 'ByteString's by rendering each
--- element.
-renderParams :: PList xs -> [ByteString]
-renderParams PNil = []
-renderParams (PCons x xs) = render x : renderParams xs
+instance (Parameter x, Parameter x') 
+      => Field4 (PList (a ': b ': c ': x ': xs)) 
+                (PList (a ': b ': c ': x' ': xs)) x x'
+      where
+    _4 = lens (view (ptail . ptail . ptail . phead)) 
+              (flip (set (ptail . ptail . ptail . phead)))
 
 makeLenses ''Raw

@@ -6,6 +6,8 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Network.Yak where
 
 import Control.Applicative
@@ -25,11 +27,12 @@ import qualified Data.List.NonEmpty as N
 import qualified Data.Attoparsec.ByteString.Char8 as A
 
 -- | Encode an IRC message to a 'ByteString', ready for the network
-emit :: forall c p. KnownSymbol c => Raw c p -> ByteString
+emit :: forall c p. (Parameter (PList p), KnownSymbol c) 
+     => Raw c p -> ByteString
 emit Raw{..} = fromMaybe "" (mappend ":" <$> _prefix)
             <> (B.pack $ symbolVal (Proxy @c))
             <> " "
-            <> B.unwords (renderParams _params)
+            <> render _params
             <> "\n"
 
 -- | A Join command must have at least one channel to join
@@ -50,6 +53,12 @@ parseJoin = do
     cs <- A.sepBy1 (A.many1 $ A.satisfy A.isAlpha_ascii) (A.char ',')
     pure $ join (N.fromList $ map T.pack cs)
 
+{-
+ -withJoin :: SomeRaw -> (Join -> r) -> Maybe r
+ -withJoin raw f = case raw of
+ -    SomeRaw x -> _
+ -
+ -}
 -- | A Part command must have at least one channel to part from
 type Part = Raw "PART" '[NonEmpty Text]
 
@@ -95,8 +104,9 @@ data CoreMsg
     | MPart Part
     | MQuit Quit
 
-fetch :: ByteString -> Maybe CoreMsg
+makePrisms ''CoreMsg
+
+fetch :: forall c p. (Parameter (PList p), KnownSymbol c) => ByteString -> Maybe (Raw c p)
 fetch = A.maybeResult . A.parse go
-    where go = MJoin <$> parseJoin
-           <|> MPart <$> parsePart
-           <|> MQuit <$> parseQuit
+    where go  = Raw <$> pure Nothing <*> (cmd *> A.space *> seize)
+          cmd = A.string . B.pack . symbolVal $ Proxy @c
