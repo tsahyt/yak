@@ -6,6 +6,8 @@ module Network.Yak.Messages
 
     Pass,
     Nick,
+    User,
+    Oper,
     Join,
     Part,
     Quit,
@@ -18,6 +20,7 @@ import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.List.NonEmpty (NonEmpty)
 import Network.Yak.Types
+import Data.Word (Word)
 
 import qualified Data.Text as T
 
@@ -38,6 +41,8 @@ instance Parameter Message where
 
 type Pass = Msg "PASS" '[Text]
 type Nick = Msg "NICK" '[Text]
+type User = Msg "USER" '[Text, Word, Unused "*", Message]
+type Oper = Msg "OPER" '[Text, Text]
 
 type Join = Msg "JOIN" '[NonEmpty Channel]
 type Part = Msg "PART" '[NonEmpty Channel]

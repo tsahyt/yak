@@ -2,9 +2,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TypeInType #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -16,6 +18,7 @@ module Network.Yak.Types
     Msg(..),
     SomeMsg(..),
     withSomeMsg,
+    Unused(..),
     Parameter(..),
     PList(..),
     phead,
@@ -33,10 +36,13 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.Monoid
+import Data.Word (Word)
+import Data.Proxy
 import GHC.TypeLits
 
 import qualified Data.Text.Encoding as E
 import qualified Data.Text as T
+import qualified Data.ByteString.Char8 as B
 
 -- | Proxy type for holding IRC messages
 data Msg command params = Msg
@@ -85,6 +91,16 @@ instance (Parameter x, Parameter (PList xs))
 instance Parameter (PList '[]) where
     render _ = ""
     seize  = pure PNil
+
+data Unused a = Unused
+
+instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
+    render _ = B.pack . symbolVal $ Proxy @a
+    seize = pure Unused
+
+instance Parameter Word where
+    render = render . T.pack . show
+    seize  = decimal
 
 -- | Heterogenous list of parameters.
 data PList a where
