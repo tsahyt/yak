@@ -31,8 +31,8 @@ import qualified Data.Text as T
 -- | Encode an IRC message to a 'ByteString', ready for the network
 emit :: forall c p. (Parameter (PList p), KnownSymbol c) 
      => Msg c p -> ByteString
-emit Msg{..} = fromMaybe "" (mappend ":" . rpfx <$> msgPrefix)
-            <> " "
+emit Msg{..} = fromMaybe "" 
+               (flip mappend " " . mappend ":" . rpfx <$> msgPrefix)
             <> (B.pack $ symbolVal (Proxy @c))
             <> " "
             <> render msgParams
