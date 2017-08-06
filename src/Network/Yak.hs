@@ -46,10 +46,10 @@ emit Msg{..} = fromMaybe "" (mappend ":" . rpfx <$> msgPrefix)
 
 fetch :: forall c p. (Parameter (PList p), KnownSymbol c) 
       => ByteString -> Maybe (Msg c p)
-fetch = maybeResult . parse go
+fetch = either (const Nothing) Just . parseOnly go
     where go  = Msg 
             <$> optional (char ':' *> pfx) 
-            <*> (cmd *> skipSpace *> seize <* endOfLine)
+            <*> (skipSpace *> cmd *> skipSpace *> seize)
           cmd = string . B.pack . symbolVal $ Proxy @c
           pfx = (PrefixUser <$> hst) <|> (PrefixServer <$> srv)
 

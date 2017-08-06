@@ -31,7 +31,7 @@ instance Parameter Channel where
     render = render . getChannel
     seize  = do
         mark <- satisfy (inClass "&#+!")
-        name <- many1 $ satisfy (notInClass " \7,")
+        name <- many1 $ satisfy (notInClass " \7,\n")
         pure . Channel . T.pack $ mark : name
 
 newtype Message = Message { getMessage :: Text }
