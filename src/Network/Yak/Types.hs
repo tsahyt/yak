@@ -12,10 +12,13 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 
 module Network.Yak.Types
 (
     Msg(..),
+    vacant,
+    (<:>),
     SomeMsg(..),
     withSomeMsg,
     Unused(..),
@@ -48,6 +51,13 @@ import qualified Data.ByteString.Char8 as B
 data Msg command params = Msg
     { _prefix  :: Maybe ByteString
     , _params  :: PList params }
+
+vacant :: Msg c '[]
+vacant = Msg Nothing PNil
+
+(<:>) :: x -> Msg c xs -> Msg c (x ': xs)
+x <:> (Msg p xs) = Msg p (PCons x xs)
+infixr 5 <:>
 
 data SomeMsg where
     SomeMsg :: KnownSymbol c => Msg c p -> SomeMsg
