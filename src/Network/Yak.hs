@@ -42,12 +42,14 @@ emit Msg{..} = fromMaybe "" (mappend ":" . rpfx <$> msgPrefix)
           rpfx (PrefixUser h) = render $
               hostNick h 
            <> maybe "" (T.cons '!') (hostUser h) 
-           <> maybe "" (T.cons '!') (hostHost h)
+           <> maybe "" (T.cons '@') (hostHost h)
 
 fetch :: forall c p. (Parameter (PList p), KnownSymbol c) 
       => ByteString -> Maybe (Msg c p)
 fetch = maybeResult . parse go
-    where go  = Msg <$> optional pfx <*> (cmd *> skipSpace *> seize)
+    where go  = Msg 
+            <$> optional (char ':' *> pfx) 
+            <*> (cmd *> skipSpace *> seize <* endOfLine)
           cmd = string . B.pack . symbolVal $ Proxy @c
           pfx = (PrefixUser <$> hst) <|> (PrefixServer <$> srv)
 

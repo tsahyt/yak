@@ -25,6 +25,7 @@ import Data.Word (Word)
 import qualified Data.Text as T
 
 newtype Channel = Channel { getChannel :: Text }
+    deriving (Eq, Show, Ord, Read)
 
 instance Parameter Channel where
     render = render . getChannel
@@ -34,6 +35,7 @@ instance Parameter Channel where
         pure . Channel . T.pack $ mark : name
 
 newtype Message = Message { getMessage :: Text }
+    deriving (Eq, Show, Ord, Read)
 
 instance Parameter Message where
     render = render . getMessage
