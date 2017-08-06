@@ -26,15 +26,23 @@ import GHC.TypeLits
 import Network.Yak.Types
 
 import qualified Data.ByteString.Char8 as B
+import qualified Data.Text as T
 
 -- | Encode an IRC message to a 'ByteString', ready for the network
 emit :: forall c p. (Parameter (PList p), KnownSymbol c) 
      => Msg c p -> ByteString
-emit Msg{..} = fromMaybe "" undefined -- (mappend ":" <$> msgPrefix)
+emit Msg{..} = fromMaybe "" (mappend ":" . rpfx <$> msgPrefix)
+            <> " "
             <> (B.pack $ symbolVal (Proxy @c))
             <> " "
             <> render msgParams
             <> "\n"
+
+    where rpfx (PrefixServer x) = render x
+          rpfx (PrefixUser h) = render $
+              hostNick h 
+           <> maybe "" (T.cons '!') (hostUser h) 
+           <> maybe "" (T.cons '!') (hostHost h)
 
 fetch :: forall c p. (Parameter (PList p), KnownSymbol c) 
       => ByteString -> Maybe (Msg c p)

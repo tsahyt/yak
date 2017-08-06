@@ -110,7 +110,9 @@ instance Parameter a => Parameter (Maybe a) where
 
 instance (Parameter x, Parameter (PList xs)) 
       => Parameter (PList (x ': xs)) where
+    render (PCons x PNil) = render x
     render (PCons x xs) = render x <> " " <> render xs
+
     seize = PCons <$> seize <*> seize
 
 instance Parameter (PList '[]) where
@@ -160,4 +162,3 @@ instance (Parameter x, Parameter x')
               (flip (set (ptail . ptail . ptail . phead)))
 
 makeFields ''Msg
-makeFields ''Host
