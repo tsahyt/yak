@@ -13,9 +13,9 @@
 
 module Network.Yak.Types
 (
-    Raw(..),
-    SomeRaw(..),
-    withSomeRaw,
+    Msg(..),
+    SomeMsg(..),
+    withSomeMsg,
     Parameter(..),
     PList(..),
     phead,
@@ -32,24 +32,22 @@ import Data.List.NonEmpty (NonEmpty(..), fromList)
 import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
-import Data.Proxy
 import Data.Monoid
 import GHC.TypeLits
-import Data.Kind
 
 import qualified Data.Text.Encoding as E
 import qualified Data.Text as T
 
 -- | Proxy type for holding IRC messages
-data Raw command params = Raw
+data Msg command params = Msg
     { _prefix  :: Maybe ByteString
     , _params  :: PList params }
 
-data SomeRaw where
-    SomeRaw :: KnownSymbol c => Raw c p -> SomeRaw
+data SomeMsg where
+    SomeMsg :: KnownSymbol c => Msg c p -> SomeMsg
 
-withSomeRaw :: SomeRaw -> (forall c p. KnownSymbol c => Raw c p -> r) -> r
-withSomeRaw (SomeRaw r) f = f r
+withSomeMsg :: SomeMsg -> (forall c p. KnownSymbol c => Msg c p -> r) -> r
+withSomeMsg (SomeMsg r) f = f r
 
 -- | Class for any kind of IRC parameter that can be rendered to 'ByteString'
 -- and read from a 'ByteString'
@@ -120,4 +118,4 @@ instance (Parameter x, Parameter x')
     _4 = lens (view (ptail . ptail . ptail . phead)) 
               (flip (set (ptail . ptail . ptail . phead)))
 
-makeLenses ''Raw
+makeLenses ''Msg
