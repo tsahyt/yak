@@ -89,7 +89,7 @@ class Parameter a where
 -- | Text is encoded as UTF-8
 instance Parameter Text where
     render = E.encodeUtf8
-    seize  = T.pack <$> many1 (satisfy isAlpha_ascii)
+    seize  = E.decodeUtf8 <$> takeTill isSpace
 
 -- | Lists are comma separated
 instance Parameter a => Parameter [a] where
@@ -113,13 +113,13 @@ instance (Parameter x, Parameter (PList xs))
     render (PCons x PNil) = render x
     render (PCons x xs) = render x <> " " <> render xs
 
-    seize = PCons <$> seize <*> seize
+    seize = PCons <$> seize <*> (skipSpace *> seize)
 
 instance Parameter (PList '[]) where
     render _ = ""
     seize  = pure PNil
 
-data Unused a = Unused
+data Unused a = Unused deriving (Show, Eq, Ord, Read)
 
 instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
     render _ = B.pack . symbolVal $ Proxy @a
