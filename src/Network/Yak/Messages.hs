@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Network.Yak.Messages
 (
     Channel (..),
@@ -48,11 +49,12 @@ import Data.Text.Encoding
 import Data.List.NonEmpty (NonEmpty)
 import Network.Yak.Types
 import Data.Word (Word)
+import Data.String
 
 import qualified Data.Text as T
 
 newtype Channel = Channel { getChannel :: Text }
-    deriving (Eq, Show, Ord, Read)
+    deriving (Eq, Show, Ord, Read, IsString)
 
 instance Parameter Channel where
     render = render . getChannel
@@ -62,7 +64,7 @@ instance Parameter Channel where
         pure . Channel . T.pack $ mark : name
 
 newtype Message = Message { getMessage :: Text }
-    deriving (Eq, Show, Ord, Read)
+    deriving (Eq, Show, Ord, Read, IsString)
 
 instance Parameter Message where
     render = render . T.cons ':' . getMessage
@@ -88,8 +90,8 @@ type SQuit = Msg "SQUIT" '[Text, Message]
 type Names = Msg "NAMES" '[[Channel], Maybe Text]
 type List = Msg "LIST" '[[Channel], Maybe Text]
 type Invite = Msg "INVITE" '[Text, Channel]
-type Kick = Msg "KICK" '[Channel, Text, Maybe Message]
-type Topic = Msg "TOPIC" '[Channel, Message]
+type Kick = Msg "KICK" '[NonEmpty Channel, NonEmpty Text, Maybe Message]
+type Topic = Msg "TOPIC" '[Channel, Maybe Message]
 
 -- Server Queries ---------------
 
@@ -103,6 +105,7 @@ type Notice = Msg "NOTICE" '[NonEmpty Channel, Message]
 
 -- User-based Queries -----------
 
+-- TODO: Proper Mask type
 type Who = Msg "WHO" '[Maybe Text, Maybe (Unused "o")]
 type WhoIs = Msg "WHOIS" '[Maybe Text, NonEmpty Text]
 type WhoWas = Msg "WHOWAS" '[Text, Maybe (Word, Maybe Server)]

@@ -91,6 +91,46 @@ chanOps = describe "Channel Operations" $ do
             (build "irc.tsahyt.com" (Message "bye") :: SQuit) 
                 `shouldRoundtrip` "SQUIT irc.tsahyt.com :bye\n"
 
+    describe "Mode" $ do
+        it "has format 'MODE ...'" $ do
+            expectationFailure "TODO: Implement MODE"
+
+    describe "Names" $ do
+        it "has format 'NAMES [<channel>{,<channel>} [<target>]]'" $ do
+            (build [Channel "#haskell"] (Just "target") :: Names) 
+                `shouldRoundtrip` "NAMES #haskell target\n"
+
+            (build [Channel "#haskell"] Nothing :: Names) 
+                `shouldRoundtrip` "NAMES #haskell \n"
+
+            (build [] Nothing :: Names) 
+                `shouldRoundtrip` "NAMES  \n"
+
+    describe "List" $ do
+        it "has format 'LIST [<channel>{,<channel>} [<target>]]'" $ do
+            (build [Channel "#haskell"] (Just "target") :: List)
+                `shouldRoundtrip` "LIST #haskell target\n"
+
+    describe "Invite" $ do
+        it "has format 'INVITE <nickname> <channel>'" $ do
+            (build "tsahyt" (Channel "#haskell") :: Invite)
+                `shouldRoundtrip` "INVITE tsahyt #haskell\n"
+
+    describe "Kick" $ do
+        it "has format 'KICK <channel>{,<channel>} <nick>{,<nick>}\
+          \ [<reason>];" $ do
+            (build [Channel "#haskell", Channel "#math"]
+                   ["tsahyt", "botnet"] (Just (Message "bye")) :: Kick)
+                `shouldRoundtrip` "KICK #haskell,#math tsahyt,botnet :bye\n"
+
+    describe "Topic" $ do
+        it "has format 'TOPIC <channel> [<topic>]'" $ do
+            (build (Channel "#haskell") (Just $ Message "hello world") :: Topic)
+                `shouldRoundtrip` "TOPIC #haskell :hello world\n"
+
+            (build (Channel "#haskell") Nothing :: Topic)
+                `shouldRoundtrip` "TOPIC #haskell \n"
+
 srvQueries :: Spec
 srvQueries = describe "Server Queries" $ do
     describe "Version" $ do
@@ -133,6 +173,15 @@ usrQueries = describe "User-based Queries" $ do
                 "WHO *.fi \n"
             (build (Just "*.fi") (Just Unused) :: Who) `shouldRoundtrip`
                 "WHO *.fi o\n"
+
+    describe "WhoIs" $ do
+        it "has format 'WHOIS [<target>] <mask>{,<mask>}'" $ do
+            (build (Just "eff.org") ["trillian"] :: WhoIs) `shouldRoundtrip`
+                "WHOIS eff.org trillian\n"
+
+    describe "WhoWas" $ do
+        it "has format 'WHOWAS <nick>{,<nick>} [<count> [<target>]]" $ do
+            expectationFailure "TODO: Test Case"
 
 miscMsgs :: Spec
 miscMsgs = describe "Miscellaneous" $ do
