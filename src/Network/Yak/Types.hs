@@ -140,7 +140,7 @@ data Unused a = Unused deriving (Show, Eq, Ord, Read)
 
 instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
     render _ = B.pack . symbolVal $ Proxy @a
-    seize = pure Unused
+    seize = let x = B.pack $ symbolVal (Proxy @a) in Unused <$ string x
 
 instance Parameter Word where
     render = render . T.pack . show

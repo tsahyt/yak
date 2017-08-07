@@ -22,16 +22,10 @@ main = hspec $ do
 connReg :: Spec
 connReg = describe "Connection Registration" $ do
     describe "Pass" $ do
-        it "takes one argument" $ do
-            fetch "PASS foo bar\n" `shouldBe` (Nothing :: Maybe Pass)
-
         it "has format 'PASS <password>'" $ do
             (build "hunter2" :: Pass) `shouldRoundtrip` "PASS hunter2\n"
 
     describe "Nick" $ do
-        it "takes one argument" $ do
-            fetch "NICK foo bar\n" `shouldBe` (Nothing :: Maybe Nick)
-
         it "has format 'NICK <nickname>'" $ do
             (build "tsahyt" :: Nick) `shouldRoundtrip` "NICK tsahyt\n"
 
@@ -49,8 +43,6 @@ connReg = describe "Connection Registration" $ do
     describe "Oper" $ do
         it "takes two arguments" $ do
             fetch "OPER\n" `shouldBe` (Nothing :: Maybe Oper)
-            fetch "OPER a b c\n" `shouldBe` (Nothing :: Maybe Oper)
-            fetch "OPER a b\n" `shouldBe` (Nothing :: Maybe Oper)
 
     describe "Server" $ do
         it "takes three arguments" $ do
