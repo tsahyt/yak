@@ -108,7 +108,7 @@ type Notice = Msg "NOTICE" '[NonEmpty Channel, Message]
 -- TODO: Proper Mask type
 type Who = Msg "WHO" '[Maybe Text, Maybe (Unused "o")]
 type WhoIs = Msg "WHOIS" '[Maybe Text, NonEmpty Text]
-type WhoWas = Msg "WHOWAS" '[Text, Maybe (Word, Maybe Server)]
+type WhoWas = Msg "WHOWAS" '[Text, Maybe (Word, Maybe Text)]
 
 -- Misc -------------------------
 

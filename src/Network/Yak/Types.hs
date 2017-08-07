@@ -98,11 +98,11 @@ class Parameter a where
     seize  :: Parser a
 
 -- | Text is encoded as UTF-8. Pieces of Text are space normally separated. Text
--- parsing enforces the text to be non-empty.
+-- parsing enforces the text to be non-empty, and commas are disallowed.
 instance Parameter Text where
     render = E.encodeUtf8
     seize  = E.decodeUtf8 <$> do
-                 x <- takeTill isSpace
+                 x <- takeTill (\x -> isSpace x || x == ',')
                  if B.null x then empty else pure x
 
 -- | Lists are comma separated
