@@ -100,7 +100,16 @@ chanOps = describe "Channel Operations" $ do
                 `shouldRoundtrip` "SQUIT irc.tsahyt.com :bye\n"
 
 srvQueries :: Spec
-srvQueries = return ()
+srvQueries = describe "Server Queries" $ do
+    describe "Version" $ do
+        it "has format 'VERSION [<target>]'" $ do
+            (build (Just "irc.tsahyt.com") :: Version) `shouldRoundtrip`
+                "VERSION irc.tsahyt.com\n"
+
+    describe "Motd" $ do
+        it "has format 'MOTD [<target>]'" $ do
+            (build (Just "irc.tsahyt.com") :: Motd) `shouldRoundtrip`
+                "MOTD irc.tsahyt.com\n"
 
 msgSending :: Spec
 msgSending = describe "Sending Messages" $ do
@@ -125,7 +134,13 @@ msgSending = describe "Sending Messages" $ do
                     "NOTICE #tsahyt,#math :hello world\n"
 
 usrQueries :: Spec
-usrQueries = return ()
+usrQueries = describe "User-based Queries" $ do
+    describe "Who" $ do
+        it "has format 'WHO [<mask>] [o]'" $ do
+            (build (Just "*.fi") Nothing :: Who) `shouldRoundtrip`
+                "WHO *.fi \n"
+            (build (Just "*.fi") (Just Unused) :: Who) `shouldRoundtrip`
+                "WHO *.fi o\n"
 
 miscMsgs :: Spec
 miscMsgs = describe "Miscellaneous" $ do
