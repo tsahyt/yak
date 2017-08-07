@@ -20,6 +20,7 @@ module Network.Yak.Types
     Prefix(..),
     Host(..),
     Msg(..),
+    build,
     vacant,
     (<:>),
     castMsg,
@@ -190,16 +191,40 @@ instance (Parameter x, Parameter x')
     _4 = lens (view (ptail . ptail . ptail . phead)) 
               (flip (set (ptail . ptail . ptail . phead)))
 
-class Build (xs :: [Type]) f where
-    build' :: PList xs -> f
+-- The following bit of code for Build and Reverse is adapted from an example
+-- for building HLists with variadic functions, courtesy of lyxia on #haskell.
+type family Reverse' (acc :: [Type]) (xs :: [Type]) :: [Type]
+type instance Reverse' acc '[] = acc
+type instance Reverse' acc (x ': xs) = Reverse' (x ': acc) xs
 
-instance (xs ~ ys) => Build xs (PList ys) where
-    build' = id
+class HReverse acc xs where
+    hReverse' :: PList acc -> PList xs -> PList (Reverse' acc xs)
+
+instance HReverse acc '[] where
+    hReverse' = const
+
+instance HReverse (x ': acc) xs => HReverse acc (x ': xs) where
+    hReverse' acc (PCons x xs) = hReverse' (PCons x acc) xs
+
+class Build (xs :: [Type]) f where
+    build' :: Msg c xs -> f
+
+instance (ys ~ Reverse' '[] xs, HReverse '[] xs) => Build xs (Msg c ys) where
+    build' (Msg a b) = Msg a (hReverse' PNil b)
 
 instance Build (x ': xs) g => Build xs (x -> g) where
-    build' xs x = build' (PCons x xs)
+    build' xs x = build' (x <:> xs)
 
+-- | Generalized constructor function for the creation of 'Msg' values. The
+-- types here may seem opaque, but essentially this is a variadic type-safe
+-- constructor.
+--
+-- > build "hunter2" :: Pass
+-- > build [Channel "#haskell"] (Message "hello world!") :: PrivMsg
+--
+-- The type annotations may or may not be necessary, depending on the
+-- information available to the compiler at the use site.
 build :: Build '[] f => f
-build = build' PNil
+build = build' vacant
 
 makeFields ''Msg
