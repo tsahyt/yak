@@ -97,10 +97,13 @@ class Parameter a where
     render :: a -> ByteString
     seize  :: Parser a
 
--- | Text is encoded as UTF-8. Pieces of Text are space normally separated.
+-- | Text is encoded as UTF-8. Pieces of Text are space normally separated. Text
+-- parsing enforces the text to be non-empty.
 instance Parameter Text where
     render = E.encodeUtf8
-    seize  = E.decodeUtf8 <$> takeTill isSpace
+    seize  = E.decodeUtf8 <$> do
+                 x <- takeTill isSpace
+                 if B.null x then empty else pure x
 
 -- | Lists are comma separated
 instance Parameter a => Parameter [a] where
