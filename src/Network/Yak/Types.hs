@@ -4,8 +4,8 @@
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -13,8 +13,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Network.Yak.Types
 (
@@ -23,8 +22,8 @@ module Network.Yak.Types
     Msg(..),
     vacant,
     (<:>),
+    castMsg,
     SomeMsg(..),
-    withSomeMsg,
     Unused(..),
     Parameter(..),
     PList(..),
@@ -45,6 +44,7 @@ import Data.Text (Text)
 import Data.Monoid
 import Data.Word (Word)
 import Data.Proxy
+import Data.Kind (Type)
 import GHC.TypeLits
 
 import qualified Data.Text.Encoding as E
@@ -81,11 +81,13 @@ vacant = Msg Nothing PNil
 x <:> (Msg p xs) = Msg p (PCons x xs)
 infixr 5 <:>
 
-data SomeMsg where
-    SomeMsg :: KnownSymbol c => Msg c p -> SomeMsg
+-- | Safely cast one message to another. Equality of parameter lists is
+-- statically enforced.
+castMsg :: (KnownSymbol c1, KnownSymbol c2) => Msg c1 p -> Msg c2 p
+castMsg (Msg c p) = Msg c p
 
-withSomeMsg :: SomeMsg -> (forall c p. KnownSymbol c => Msg c p -> r) -> r
-withSomeMsg (SomeMsg r) f = f r
+data SomeMsg where
+    SomeMsg :: (KnownSymbol c, Parameter (PList p)) => Msg c p -> SomeMsg
 
 -- | Class for any kind of IRC parameter that can be rendered to 'ByteString'
 -- and read from a 'ByteString'
@@ -139,7 +141,7 @@ instance Parameter Word where
     render = render . T.pack . show
     seize  = decimal
 
--- | Only positive is parsed
+-- | Only positive
 instance Parameter Int where
     render = render . T.pack . show
     seize  = decimal
@@ -187,5 +189,17 @@ instance (Parameter x, Parameter x')
       where
     _4 = lens (view (ptail . ptail . ptail . phead)) 
               (flip (set (ptail . ptail . ptail . phead)))
+
+class Build (xs :: [Type]) f where
+    build' :: PList xs -> f
+
+instance (xs ~ ys) => Build xs (PList ys) where
+    build' = id
+
+instance Build (x ': xs) g => Build xs (x -> g) where
+    build' xs x = build' (PCons x xs)
+
+build :: Build '[] f => f
+build = build' PNil
 
 makeFields ''Msg

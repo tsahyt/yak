@@ -46,6 +46,10 @@ instance Parameter Message where
     seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
 
 type Pass = Msg "PASS" '[Text]
+
+pass :: Text -> Pass
+pass x = x <:> vacant
+
 type Nick = Msg "NICK" '[Text]
 type User = Msg "USER" '[Text, Word, Unused "*", Message]
 type Oper = Msg "OPER" '[Text, Text]

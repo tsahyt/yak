@@ -11,6 +11,7 @@
 module Network.Yak
 (
     emit,
+    emitSome,
     fetch
 )
 where
@@ -43,6 +44,10 @@ emit Msg{..} = fromMaybe ""
               hostNick h 
            <> maybe "" (T.cons '!') (hostUser h) 
            <> maybe "" (T.cons '@') (hostHost h)
+
+-- | Encode existentially quantified message.
+emitSome :: SomeMsg -> ByteString
+emitSome (SomeMsg r) = emit r
 
 fetch :: forall c p. (Parameter (PList p), KnownSymbol c) 
       => ByteString -> Maybe (Msg c p)
