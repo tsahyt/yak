@@ -35,17 +35,6 @@ connReg = describe "Connection Registration" $ do
         it "has format 'NICK <nickname>'" $ do
             (build "tsahyt" :: Nick) `shouldRoundtrip` "NICK tsahyt\n"
 
-    describe "Join" $ do
-        it "take Channel arugments" $ do
-            fetch "JOIN #haskell\n" `shouldNotBe` (Nothing :: Maybe Join)
-
-        it "supports multiple arguments in a list" $ do
-            fetch "JOIN #haskell,#math\n" `shouldNotBe` (Nothing :: Maybe Join)
-
-        it "has format 'JOIN <channel>{,<channel>}'" $ do
-            (build [Channel "#haskell", Channel "#math"] :: Join)
-                `shouldRoundtrip` "JOIN #haskell,#math\n"
-
     describe "User" $ do
         it "takes 4 arguments" $ do
             fetch "USER a 0 *\n" `shouldBe` (Nothing :: Maybe User)
@@ -74,7 +63,41 @@ connReg = describe "Connection Registration" $ do
                     Maybe Server)
 
 chanOps :: Spec
-chanOps = return ()
+chanOps = describe "Channel Operations" $ do
+    describe "Join" $ do
+        it "take Channel arugments" $ do
+            fetch "JOIN #haskell\n" `shouldNotBe` (Nothing :: Maybe Join)
+
+        it "supports multiple arguments in a list" $ do
+            fetch "JOIN #haskell,#math\n" `shouldNotBe` (Nothing :: Maybe Join)
+
+        it "has format 'JOIN <channel>{,<channel>}'" $ do
+            (build [Channel "#haskell", Channel "#math"] :: Join)
+                `shouldRoundtrip` "JOIN #haskell,#math\n"
+
+    describe "Part" $ do
+        it "take Channel arugments" $ do
+            fetch "PART #haskell\n" `shouldNotBe` (Nothing :: Maybe Part)
+
+        it "supports multiple arguments in a list" $ do
+            fetch "PART #haskell,#math\n" `shouldNotBe` (Nothing :: Maybe Part)
+
+        it "has format 'PART <channel>{,<channel>} [<message>]'" $ do
+            (build [Channel "#haskell", Channel "#math"] 
+                   (Just (Message "bye")) :: Part)
+                `shouldRoundtrip` "PART #haskell,#math :bye\n"
+
+            (build [Channel "#haskell"] Nothing :: Part)
+                `shouldRoundtrip` "PART #haskell \n"
+
+    describe "Quit" $ do
+        it "has format 'QUIT <message>'" $ do
+            (build (Message "bye") :: Quit) `shouldRoundtrip` "QUIT :bye\n"
+
+    describe "SQuit" $ do
+        it "has format 'SQUIT <server> <message>'" $ do
+            (build "irc.tsahyt.com" (Message "bye") :: SQuit) 
+                `shouldRoundtrip` "SQUIT irc.tsahyt.com :bye\n"
 
 srvQueries :: Spec
 srvQueries = return ()
@@ -89,7 +112,7 @@ msgSending = describe "Sending Messages" $ do
         it "has format 'PRIVMSG <receiver>{,receiver} :<text>'" $ do
             (build [Channel "#tsahyt", Channel "#math"] 
                    (Message "hello world") :: PrivMsg) `shouldRoundtrip` 
-                    "PRIVMSG #tsahyt,#math :hello world\n" 
+                    "PRIVMSG #tsahyt,#math :hello world\n"
 
     describe "Notice" $ do
         it "takes multiple destinations in a list" $ do
@@ -99,13 +122,31 @@ msgSending = describe "Sending Messages" $ do
         it "has format 'NOTICE <receiver>{,receiver} :<text>'" $ do
             (build [Channel "#tsahyt", Channel "#math"] 
                    (Message "hello world") :: Notice) `shouldRoundtrip` 
-                    "NOTICE #tsahyt,#math :hello world\n" 
+                    "NOTICE #tsahyt,#math :hello world\n"
 
 usrQueries :: Spec
 usrQueries = return ()
 
 miscMsgs :: Spec
-miscMsgs = return ()
+miscMsgs = describe "Miscellaneous" $ do
+    describe "Ping" $ do
+        it "has format 'PING <server> [<server>]'" $ do
+            (build "irc.tsahyt.com" Nothing :: Ping) `shouldRoundtrip`
+                "PING irc.tsahyt.com \n"
+            (build "irc.tsahyt.com" (Just "foo") :: Ping) `shouldRoundtrip`
+                "PING irc.tsahyt.com foo\n"
+
+    describe "Pong" $ do
+        it "has format 'PONG <server> [<server>]'" $ do
+            (build "irc.tsahyt.com" Nothing :: Pong) `shouldRoundtrip`
+                "PONG irc.tsahyt.com \n"
+            (build "irc.tsahyt.com" (Just "foo") :: Pong) `shouldRoundtrip`
+                "PONG irc.tsahyt.com foo\n"
+
+    describe "Error" $ do
+        it "has format 'ERROR <message>'" $ do
+            (build (Message "fubar") :: Error) `shouldRoundtrip`
+                "ERROR :fubar\n"
 
 shouldRoundtrip 
     :: (Parameter (PList p), Show (PList p), Eq (PList p), KnownSymbol c) 

@@ -74,14 +74,14 @@ instance Parameter Message where
 
 type Pass = Msg "PASS" '[Text]
 type Nick = Msg "NICK" '[Text]
-type User = Msg "USER" '[Text, Word, Unused "*", Message]    -- TODO: RFC?
+type User = Msg "USER" '[Text, Word, Unused "*", Message]
 type Server = Msg "SERVER" '[Text, Word, Message]
 type Oper = Msg "OPER" '[Text, Text]
 
 -- Channel Operations -----------
 
 type Join = Msg "JOIN" '[NonEmpty Channel]
-type Part = Msg "PART" '[NonEmpty Channel]
+type Part = Msg "PART" '[NonEmpty Channel, Maybe Message]
 type Quit = Msg "QUIT" '[Message]
 type SQuit = Msg "SQUIT" '[Text, Message]
 -- TODO: Modes
