@@ -21,6 +21,7 @@ module Network.Yak.Types
     Host(..),
     Msg(..),
     build,
+    buildPrefix,
     vacant,
     (<:>),
     castMsg,
@@ -147,6 +148,10 @@ instance Parameter Int where
     render = render . T.pack . show
     seize  = decimal
 
+instance (Parameter a, Parameter b) => Parameter (a, b) where
+    render (a,b) = render a <> " " <> render b
+    seize = (,) <$> seize <*> (skipSpace *> seize)
+
 -- | Heterogeneous list of parameters.
 data PList a where
     PNil  :: PList '[]
@@ -191,6 +196,8 @@ instance (Parameter x, Parameter x')
     _4 = lens (view (ptail . ptail . ptail . phead)) 
               (flip (set (ptail . ptail . ptail . phead)))
 
+makeFields ''Msg
+
 -- The following bit of code for Build and Reverse is adapted from an example
 -- for building HLists with variadic functions, courtesy of lyxia on #haskell.
 type family Reverse' (acc :: [Type]) (xs :: [Type]) :: [Type]
@@ -227,4 +234,6 @@ instance Build (x ': xs) g => Build xs (x -> g) where
 build :: Build '[] f => f
 build = build' vacant
 
-makeFields ''Msg
+-- | Like 'build' but takes a 'Prefix' that will be added to the message.
+buildPrefix :: Build '[] f => Prefix -> f
+buildPrefix p = build' (vacant & prefix .~ Just p)

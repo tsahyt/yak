@@ -4,18 +4,41 @@ module Network.Yak.Messages
     Channel (..),
     Message (..),
 
+    -- * Connection Registration
     Pass,
     Nick,
     User,
+    Server,
     Oper,
+
+    -- * Channel Operations
     Join,
     Part,
     Quit,
     SQuit,
+    Names,
+    List,
+    Invite,
+    Kick,
+    Topic,
+
+    -- * Server Queries
+    Version,
+    Motd,
+
+    -- * Sending Messages
     PrivMsg,
     Notice,
-    Topic,
-    Invite
+
+    -- * User-based Queries
+    Who,
+    WhoIs,
+    WhoWas,
+
+    -- * Misc
+    Ping,
+    Pong,
+    Error
 )
 where
 
@@ -45,22 +68,47 @@ instance Parameter Message where
     render = render . T.cons ':' . getMessage
     seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
 
+-------------------------------------------------------------------------------
+
+-- Connection Registration ------
+
 type Pass = Msg "PASS" '[Text]
-
-pass :: Text -> Pass
-pass x = x <:> vacant
-
 type Nick = Msg "NICK" '[Text]
-type User = Msg "USER" '[Text, Word, Unused "*", Message]
+type User = Msg "USER" '[Text, Word, Unused "*", Message]    -- TODO: RFC?
+type Server = Msg "SERVER" '[Text, Word, Message]
 type Oper = Msg "OPER" '[Text, Text]
+
+-- Channel Operations -----------
 
 type Join = Msg "JOIN" '[NonEmpty Channel]
 type Part = Msg "PART" '[NonEmpty Channel]
 type Quit = Msg "QUIT" '[Message]
 type SQuit = Msg "SQUIT" '[Text, Message]
+-- TODO: Modes
+type Names = Msg "NAMES" '[[Channel], Maybe Text]
+type List = Msg "LIST" '[[Channel], Maybe Text]
+type Invite = Msg "INVITE" '[Text, Channel]
+type Kick = Msg "KICK" '[Channel, Text, Maybe Message]
+type Topic = Msg "TOPIC" '[Channel, Message]
+
+-- Server Queries ---------------
+
+type Version = Msg "VERSION" '[Maybe Text]
+type Motd = Msg "MOTD" '[Maybe Text]
+
+-- Sending Messages -------------
 
 type PrivMsg = Msg "PRIVMSG" '[NonEmpty Channel, Message]
 type Notice = Msg "NOTICE" '[NonEmpty Channel, Message]
 
-type Topic = Msg "TOPIC" '[Channel, Message]
-type Invite = Msg "INVITE" '[Text, Channel]
+-- User-based Queries -----------
+
+type Who = Msg "WHO" '[Maybe Text, Maybe (Unused "o")]
+type WhoIs = Msg "WHOIS" '[Maybe Text, NonEmpty Text]
+type WhoWas = Msg "WHOWAS" '[Text, Maybe (Word, Maybe Server)]
+
+-- Misc -------------------------
+
+type Ping = Msg "PING" '[Text, Maybe Text]
+type Pong = Msg "PONG" '[Text, Maybe Text]
+type Error = Msg "ERROR" '[Message]
