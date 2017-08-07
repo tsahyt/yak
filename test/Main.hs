@@ -12,12 +12,29 @@ import GHC.TypeLits
 
 main :: IO ()
 main = hspec $ do
+    prefixes
     connReg
     chanOps
     srvQueries
     msgSending
     usrQueries
     miscMsgs
+
+prefixes :: Spec
+prefixes = describe "Prefixes" $ do
+    describe "Host" $ do
+        it "example ':tsahyt!tsahyt@user/tsahyt PRIVMSG #0 :foo'" $ do
+            (msgPrefix =<<
+                (fetch ":tsahyt!tsahyt@user/tsahyt PRIVMSG #0 :foo" 
+                       :: Maybe PrivMsg))
+                `shouldBe` Just (PrefixUser 
+                    (Host "tsahyt" (Just "tsahyt") (Just "user/tsahyt")))
+
+    describe "Server" $ do
+        it "example ':irc.znc.in PONG irc.znc.in tsahyt.com'" $ do
+            (msgPrefix =<<
+                (fetch ":irc.znc.in PONG irc.znc.in tsahyt.com" :: Maybe Pong))
+                `shouldBe` Just (PrefixServer "irc.znc.in")
 
 connReg :: Spec
 connReg = describe "Connection Registration" $ do
