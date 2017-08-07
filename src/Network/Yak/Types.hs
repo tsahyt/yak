@@ -93,7 +93,7 @@ class Parameter a where
     render :: a -> ByteString
     seize  :: Parser a
 
--- | Text is encoded as UTF-8
+-- | Text is encoded as UTF-8. Pieces of Text are space normally separated.
 instance Parameter Text where
     render = E.encodeUtf8
     seize  = E.decodeUtf8 <$> takeTill isSpace
@@ -103,12 +103,14 @@ instance Parameter a => Parameter [a] where
     render = mconcat . intersperse "," . map render
     seize  = sepBy seize (char ',')
 
+-- | Like lists but non-empty
 instance Parameter a => Parameter (NonEmpty a) where
     render (x :| []) = render x
     render (x :| xs) = render (x : xs)
     
     seize = fromList <$> sepBy1 seize (char ',')
 
+-- | A Maybe parameter can be totally absent
 instance Parameter a => Parameter (Maybe a) where
     render (Just x) = render x
     render Nothing  = ""
@@ -126,6 +128,7 @@ instance Parameter (PList '[]) where
     render _ = ""
     seize  = pure PNil
 
+-- | Proxy type for inserting special syntax
 data Unused a = Unused deriving (Show, Eq, Ord, Read)
 
 instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
@@ -133,6 +136,11 @@ instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
     seize = pure Unused
 
 instance Parameter Word where
+    render = render . T.pack . show
+    seize  = decimal
+
+-- | Only positive is parsed
+instance Parameter Int where
     render = render . T.pack . show
     seize  = decimal
 
