@@ -32,7 +32,9 @@ module Network.Yak.Types
     phead,
     ptail,
     params,
-    prefix
+    prefix,
+    Channel(..),
+    Message(..),
 )
 where
 
@@ -240,3 +242,24 @@ build = build' vacant
 -- | Like 'build' but takes a 'Prefix' that will be added to the message.
 buildPrefix :: Build '[] f => Prefix -> f
 buildPrefix p = build' (vacant & prefix .~ Just p)
+
+newtype Channel = Channel { getChannel :: Text }
+    deriving (Eq, Show, Ord, Read, IsString)
+
+makeWrapped ''Channel
+
+instance Parameter Channel where
+    render = render . getChannel
+    seize  = do
+        mark <- satisfy (inClass "&#+!")
+        name <- many1 $ satisfy (notInClass " \7,\n")
+        pure . Channel . T.pack $ mark : name
+
+newtype Message = Message { getMessage :: Text }
+    deriving (Eq, Show, Ord, Read, IsString)
+
+makeWrapped ''Message
+
+instance Parameter Message where
+    render = render . T.cons ':' . getMessage
+    seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))

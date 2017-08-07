@@ -2,9 +2,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Network.Yak.Messages
 (
-    Channel (..),
-    Message (..),
-
     -- * Connection Registration
     Pass,
     Nick,
@@ -52,25 +49,6 @@ import Data.Word (Word)
 import Data.String
 
 import qualified Data.Text as T
-
-newtype Channel = Channel { getChannel :: Text }
-    deriving (Eq, Show, Ord, Read, IsString)
-
-instance Parameter Channel where
-    render = render . getChannel
-    seize  = do
-        mark <- satisfy (inClass "&#+!")
-        name <- many1 $ satisfy (notInClass " \7,\n")
-        pure . Channel . T.pack $ mark : name
-
-newtype Message = Message { getMessage :: Text }
-    deriving (Eq, Show, Ord, Read, IsString)
-
-instance Parameter Message where
-    render = render . T.cons ':' . getMessage
-    seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
-
--------------------------------------------------------------------------------
 
 -- Connection Registration ------
 
