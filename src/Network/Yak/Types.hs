@@ -14,6 +14,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Network.Yak.Types
 (
@@ -66,6 +67,12 @@ data Host = Host
 data Msg command params = Msg
     { msgPrefix  :: Maybe Prefix
     , msgParams  :: PList params }
+
+instance Eq (PList params) => Eq (Msg command params) where
+    Msg a b == Msg c d = a == c && b == d
+
+instance Show (PList params) => Show (Msg command params) where
+    show (Msg a b) = "Msg (" ++ show a ++ ") (" ++ show b ++ ")"
 
 vacant :: Msg c '[]
 vacant = Msg Nothing PNil
@@ -133,6 +140,18 @@ instance Parameter Word where
 data PList a where
     PNil  :: PList '[]
     PCons :: forall x xs. x -> PList xs -> PList (x ': xs)
+
+instance Eq (PList '[]) where
+    PNil == PNil = True
+
+instance (Eq x, Eq (PList xs)) => Eq (PList (x ': xs)) where
+    (PCons x xs) == (PCons y ys) = x == y && xs == ys
+
+instance Show (PList '[]) where
+    show PNil = "PNil"
+
+instance (Show x, Show (PList xs)) => Show (PList (x ': xs)) where
+    show (PCons x xs) = show x ++ " `PCons` " ++ show xs
 
 phead :: Parameter x' => Lens (PList (x ': xs)) (PList (x' ': xs)) x x'
 phead = lens (\(PCons x _) -> x) (\(PCons _ xs) x -> PCons x xs)

@@ -14,11 +14,11 @@ module Network.Yak.Messages
     SQuit,
     PrivMsg,
     Notice,
-    Topic
+    Topic,
+    Invite
 )
 where
 
-import Control.Applicative
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.Text.Encoding
@@ -59,3 +59,4 @@ type PrivMsg = Msg "PRIVMSG" '[NonEmpty Channel, Message]
 type Notice = Msg "NOTICE" '[NonEmpty Channel, Message]
 
 type Topic = Msg "TOPIC" '[Channel, Message]
+type Invite = Msg "INVITE" '[Text, Channel]
