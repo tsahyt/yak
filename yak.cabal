@@ -18,6 +18,7 @@ library
   exposed-modules:     Network.Yak
                        Network.Yak.Client
                        Network.Yak.Client.Lens
+                       Network.Yak.Responses
                        Network.Yak.Types
                        Network.Yak.TH
   build-depends:       base >= 4.7 && < 5,
