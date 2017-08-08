@@ -166,6 +166,10 @@ instance Parameter Int where
     render = render . T.pack . show
     seize  = decimal
 
+instance Parameter Char where
+    render = render . T.singleton
+    seize = satisfy (not . isSpace)
+
 instance (Parameter a, Parameter b) => Parameter (a, b) where
     render (a,b) = render a <> " " <> render b
     seize = (,) <$> seize <*> (skipSpace *> seize)
