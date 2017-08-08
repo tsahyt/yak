@@ -178,6 +178,12 @@ instance (Parameter a, Parameter b) => Parameter (a, b) where
     render (a,b) = render a <> " " <> render b
     seize = (,) <$> seize <*> (skipSpace *> seize)
 
+instance (Parameter a, Parameter b) => Parameter (Either a b) where
+    render (Left x)  = render x
+    render (Right x) = render x
+
+    seize = (Left <$> seize) <|> (Right <$> seize)
+
 -- | Heterogeneous list of parameters.
 data PList a where
     PNil  :: PList '[]
