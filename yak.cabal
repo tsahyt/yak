@@ -16,7 +16,8 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Network.Yak
-                       Network.Yak.Messages
+                       Network.Yak.Client
+                       Network.Yak.Client.Lens
                        Network.Yak.Types
                        Network.Yak.TH
   build-depends:       base >= 4.7 && < 5,

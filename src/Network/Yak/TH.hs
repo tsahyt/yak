@@ -1,5 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-unused-pattern-binds #-}
 module Network.Yak.TH
 (
     makeMsgLenses
@@ -22,9 +23,9 @@ listParams name = do
           go x = error $ "unexpected type: " ++ pprint x ++ "(" ++ show x ++ ")"
 
 lensName :: Name -> String -> Name
-lensName base field =
+lensName base fieldName =
     let base' = nameBase base
-     in mkName $ over _head toLower base' ++ over _head toUpper field
+     in mkName $ over _head toLower base' ++ over _head toUpper fieldName
 
 -- | Function to build lenses for type synonyms of 'Msg'.
 --
