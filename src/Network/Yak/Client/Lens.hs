@@ -1,6 +1,106 @@
+-- | Lenses for "Network.Yak.Client".
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DataKinds #-}
-module Network.Yak.Client.Lens where
+module Network.Yak.Client.Lens
+(
+    -- * Connection Registration
+    -- ** Pass
+    passPassword,
+
+    -- ** Nick
+    nickNickname,
+
+    -- ** User
+    userUser,
+    userMode,
+    userUnused,
+    userRealname,
+
+    -- ** Server
+    serverServername,
+    serverHopCount,
+    serverInfo,
+
+    -- ** Oper
+    operUsername,
+    operPassword,
+
+    -- * Channel Operations
+    -- ** Join
+    joinChannels,
+    
+    -- ** Part
+    partChannels,
+
+    -- ** Quit
+    quitMessage,
+
+    -- ** SQuit
+    sQuitServer,
+    sQuitComment,
+
+    -- ** Names
+    namesChannels,
+    namesTarget,
+
+    -- ** List
+    listChannels,
+    listTarget,
+
+    -- ** Invite
+    inviteNickname,
+    inviteChannel,
+
+    -- ** Kick
+    kickChannels,
+    kickUsers,
+    kickMessage,
+
+    -- ** Topic
+    topicChannel,
+    topicMessage,
+
+    -- ** Version
+    versionTarget,
+
+    -- ** Motd
+    motdTarget,
+    
+    -- * Sending Messages
+    -- ** PrivMsg
+    privMsgChannels,
+    privMsgMessage,
+
+    -- ** Notice
+    noticeChannels,
+    noticeMessage,
+
+    -- * User-based Queries
+    -- ** Who
+    whoMask,
+    whoOnlyOps,
+
+    -- ** WhoIs
+    whoIsTarget,
+    whoIsMasks,
+
+    -- ** WhoWas
+    whoWasNickname,
+    whoWasTarget,
+
+    -- * Misc
+    -- ** Ping
+    pingServer,
+    pingTarget,
+
+    -- ** Pong
+    pongServer,
+    pongTarget,
+
+    -- ** Error
+    errorMessage
+)
+where
 
 import Network.Yak.TH
 import Network.Yak.Types

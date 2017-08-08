@@ -1,3 +1,6 @@
+-- | Messages for IRC Clients, as defined by RFC 2812,
+-- <https://tools.ietf.org/html/rfc2812>. This does not include the responses.
+-- See "Network.Yak.Response" for RFC-compliant responses.
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Network.Yak.Client
