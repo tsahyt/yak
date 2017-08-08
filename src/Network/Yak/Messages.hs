@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Network.Yak.Messages
 (
     -- * Connection Registration
@@ -40,15 +39,10 @@ module Network.Yak.Messages
 )
 where
 
-import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
-import Data.Text.Encoding
 import Data.List.NonEmpty (NonEmpty)
 import Network.Yak.Types
 import Data.Word (Word)
-import Data.String
-
-import qualified Data.Text as T
 
 -- Connection Registration ------
 

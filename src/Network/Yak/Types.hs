@@ -14,6 +14,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Network.Yak.Types
 (
@@ -49,9 +50,10 @@ import Data.Monoid
 import Data.Word (Word)
 import Data.Proxy
 import Data.Kind (Type)
+import Data.Text.Encoding
+import Data.String
 import GHC.TypeLits
 
-import qualified Data.Text.Encoding as E
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as B
 
@@ -102,8 +104,8 @@ class Parameter a where
 -- | Text is encoded as UTF-8. Pieces of Text are space normally separated. Text
 -- parsing enforces the text to be non-empty, and commas are disallowed.
 instance Parameter Text where
-    render = E.encodeUtf8
-    seize  = E.decodeUtf8 <$> do
+    render = encodeUtf8
+    seize  = decodeUtf8 <$> do
                  x <- takeTill (\x -> isSpace x || x == ',')
                  if B.null x then empty else pure x
 
