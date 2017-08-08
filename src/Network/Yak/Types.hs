@@ -236,7 +236,7 @@ instance (Parameter x, Parameter x')
       where
     _9 = ptail . ptail . ptail . ptail . ptail . ptail . ptail . ptail . phead
 
-makeFields ''Msg
+makeLensesFor [("msgParams", "params"), ("msgPrefix", "prefix")] ''Msg
 
 -- The following bit of code for Build and Reverse is adapted from an example
 -- for building HLists with variadic functions, courtesy of lyxia on #haskell.

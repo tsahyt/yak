@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Network.Yak.Messages
 (
     -- * Connection Registration
     Pass,
+    passPassword,
     Nick,
     User,
     Server,
