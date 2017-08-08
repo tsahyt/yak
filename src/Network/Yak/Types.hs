@@ -183,25 +183,58 @@ ptail :: Lens (PList (x ': xs)) (PList (x ': xs')) (PList xs) (PList xs')
 ptail = lens (\(PCons _ xs) -> xs) (\(PCons x _) xs -> PCons x xs)
 
 instance (Parameter x, Parameter x') 
-      => Field1 (PList (x ': xs)) (PList (x' ': xs)) x x' where
-    _1 = lens (view phead) (flip (set phead))
-
-instance (Parameter x, Parameter x') 
-      => Field2 (PList (a ': x ': xs)) (PList (a ': x' ': xs)) x x' where
-    _2 = lens (view (ptail . phead)) (flip (set (ptail . phead)))
-
-instance (Parameter x, Parameter x') 
-      => Field3 (PList (a ': b ': x ': xs)) (PList (a ': b ': x' ': xs)) x x' 
+      => Field1 (PList (x ': xs)) 
+                (PList (x' ': xs)) x x' 
       where
-    _3 = lens (view (ptail . ptail . phead)) 
-              (flip (set (ptail . ptail . phead)))
+    _1 = phead
+
+instance (Parameter x, Parameter x') 
+      => Field2 (PList (a ': x ': xs)) 
+                (PList (a ': x' ': xs)) x x'
+      where
+    _2 = ptail . phead
+
+instance (Parameter x, Parameter x') 
+      => Field3 (PList (a ': b ': x ': xs)) 
+                (PList (a ': b ': x' ': xs)) x x' 
+      where
+    _3 = ptail . ptail . phead
 
 instance (Parameter x, Parameter x') 
       => Field4 (PList (a ': b ': c ': x ': xs)) 
                 (PList (a ': b ': c ': x' ': xs)) x x'
       where
-    _4 = lens (view (ptail . ptail . ptail . phead)) 
-              (flip (set (ptail . ptail . ptail . phead)))
+    _4 = ptail . ptail . ptail . phead
+
+instance (Parameter x, Parameter x') 
+      => Field5 (PList (a ': b ': c ': d ': x ': xs)) 
+                (PList (a ': b ': c ': d ': x' ': xs)) x x'
+      where
+    _5 = ptail . ptail . ptail . ptail . phead
+
+instance (Parameter x, Parameter x') 
+      => Field6 (PList (a ': b ': c ': d ': e ': x ': xs)) 
+                (PList (a ': b ': c ': d ': e ': x' ': xs)) x x'
+      where
+    _6 = ptail . ptail . ptail . ptail . ptail . phead
+
+instance (Parameter x, Parameter x') 
+      => Field7 (PList (a ': b ': c ': d ': e ': f ': x ': xs)) 
+                (PList (a ': b ': c ': d ': e ': f ': x' ': xs)) x x'
+      where
+    _7 = ptail . ptail . ptail . ptail . ptail . ptail . phead
+
+instance (Parameter x, Parameter x') 
+      => Field8 (PList (a ': b ': c ': d ': e ': f ': g ': x ': xs)) 
+                (PList (a ': b ': c ': d ': e ': f ': g ': x' ': xs)) x x'
+      where
+    _8 = ptail . ptail . ptail . ptail . ptail . ptail . ptail . phead
+
+instance (Parameter x, Parameter x') 
+      => Field9 (PList (a ': b ': c ': d ': e ': f ': g ': h ': x ': xs)) 
+                (PList (a ': b ': c ': d ': e ': f ': g ': h ': x' ': xs)) x x'
+      where
+    _9 = ptail . ptail . ptail . ptail . ptail . ptail . ptail . ptail . phead
 
 makeFields ''Msg
 
