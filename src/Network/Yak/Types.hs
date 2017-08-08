@@ -28,6 +28,7 @@ module Network.Yak.Types
     castMsg,
     SomeMsg(..),
     Unused(..),
+    Flag(..),
     Parameter(..),
     PList(..),
     phead,
@@ -47,6 +48,7 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.Monoid
+import Data.Maybe (fromMaybe)
 import Data.Word (Word)
 import Data.Proxy
 import Data.Kind (Type)
@@ -145,6 +147,15 @@ data Unused a = Unused deriving (Show, Eq, Ord, Read)
 instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
     render _ = B.pack . symbolVal $ Proxy @a
     seize = let x = B.pack $ symbolVal (Proxy @a) in Unused <$ string x
+
+-- | Type for expressing possibly missing flags.
+data Flag a = Set | Unset deriving (Show, Eq, Ord, Read)
+
+instance KnownSymbol a => Parameter (Flag (a :: Symbol)) where
+    render Set   = B.pack . symbolVal $ Proxy @a
+    render Unset = ""
+    seize = let x = B.pack $ symbolVal (Proxy @a) 
+             in fromMaybe Unset <$> optional (Set <$ string x)
 
 instance Parameter Word where
     render = render . T.pack . show

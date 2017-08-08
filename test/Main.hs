@@ -4,7 +4,7 @@
 module Main where
 
 import Test.Hspec
-import Network.Yak.Messages
+import Network.Yak.Client
 import Network.Yak.Types
 import Network.Yak
 import Data.ByteString.Char8 (ByteString)
@@ -186,9 +186,9 @@ usrQueries :: Spec
 usrQueries = describe "User-based Queries" $ do
     describe "Who" $ do
         it "has format 'WHO [<mask>] [o]'" $ do
-            (build (Just "*.fi") Nothing :: Who) `shouldRoundtrip`
+            (build (Just "*.fi") Unset :: Who) `shouldRoundtrip`
                 "WHO *.fi \n"
-            (build (Just "*.fi") (Just Unused) :: Who) `shouldRoundtrip`
+            (build (Just "*.fi") Set :: Who) `shouldRoundtrip`
                 "WHO *.fi o\n"
 
     describe "WhoIs" $ do

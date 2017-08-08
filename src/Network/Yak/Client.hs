@@ -82,7 +82,7 @@ type Notice  = Msg "NOTICE" '[NonEmpty Channel, Message]
 -- User-based Queries -----------
 
 -- TODO: Proper Mask type
-type Who     = Msg "WHO" '[Maybe Text, Maybe (Unused "o")]
+type Who     = Msg "WHO" '[Maybe Text, Flag "o"]
 type WhoIs   = Msg "WHOIS" '[Maybe Text, NonEmpty Text]
 type WhoWas  = Msg "WHOWAS" '[Text, Maybe (Word, Maybe Text)]
 
