@@ -198,10 +198,10 @@ usrQueries = describe "User-based Queries" $ do
 
     describe "WhoWas" $ do
         it "has format 'WHOWAS <nick>{,<nick>} [<count> [<target>]]" $ do
-            (build "Wiz" Nothing :: WhoWas) `shouldRoundtrip` "WHOWAS Wiz \n"
-            (build "Mermaid" (Just (9, Nothing)) :: WhoWas) 
+            (build ["Wiz"] Nothing :: WhoWas) `shouldRoundtrip` "WHOWAS Wiz \n"
+            (build ["Mermaid"] (Just (9, Nothing)) :: WhoWas) 
                 `shouldRoundtrip` "WHOWAS Mermaid 9 \n"
-            (build "Trillian" (Just (1, Just "*.edu")) :: WhoWas) 
+            (build ["Trillian"] (Just (1, Just "*.edu")) :: WhoWas) 
                 `shouldRoundtrip` "WHOWAS Trillian 1 *.edu\n"
 
 miscMsgs :: Spec

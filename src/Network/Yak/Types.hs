@@ -37,6 +37,10 @@ module Network.Yak.Types
     prefix,
     Channel(..),
     Message(..),
+    Nickname,
+    Username,
+    Mask,
+    Target,
 )
 where
 
@@ -313,3 +317,8 @@ makeWrapped ''Message
 instance Parameter Message where
     render = render . T.cons ':' . getMessage
     seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
+
+type Username = Text
+type Nickname = Text
+type Mask = Text
+type Target = Text

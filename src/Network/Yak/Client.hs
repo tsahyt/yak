@@ -51,28 +51,28 @@ import Data.Word (Word)
 -- Connection Registration ------
 
 type Pass    = Msg "PASS" '[Text]
-type Nick    = Msg "NICK" '[Text]
-type User    = Msg "USER" '[Text, Word, Unused "*", Message]
-type Server  = Msg "SERVER" '[Text, Word, Message]
-type Oper    = Msg "OPER" '[Text, Text]
+type Nick    = Msg "NICK" '[Nickname]
+type User    = Msg "USER" '[Username, Word, Unused "*", Message]
+type Server  = Msg "SERVER" '[Target, Word, Message]
+type Oper    = Msg "OPER" '[Username, Text]
 
 -- Channel Operations -----------
 
 type Join    = Msg "JOIN" '[NonEmpty Channel]
 type Part    = Msg "PART" '[NonEmpty Channel, Maybe Message]
 type Quit    = Msg "QUIT" '[Message]
-type SQuit   = Msg "SQUIT" '[Text, Message]
+type SQuit   = Msg "SQUIT" '[Target, Message]
 -- TODO: Modes
-type Names   = Msg "NAMES" '[[Channel], Maybe Text]
-type List    = Msg "LIST" '[[Channel], Maybe Text]
-type Invite  = Msg "INVITE" '[Text, Channel]
-type Kick    = Msg "KICK" '[NonEmpty Channel, NonEmpty Text, Maybe Message]
+type Names   = Msg "NAMES" '[[Channel], Maybe Target]
+type List    = Msg "LIST" '[[Channel], Maybe Target]
+type Invite  = Msg "INVITE" '[Nickname, Channel]
+type Kick    = Msg "KICK" '[NonEmpty Channel, NonEmpty Nickname, Maybe Message]
 type Topic   = Msg "TOPIC" '[Channel, Maybe Message]
 
 -- Server Queries ---------------
 
-type Version = Msg "VERSION" '[Maybe Text]
-type Motd    = Msg "MOTD" '[Maybe Text]
+type Version = Msg "VERSION" '[Maybe Target]
+type Motd    = Msg "MOTD" '[Maybe Target]
 
 -- Sending Messages -------------
 
@@ -81,13 +81,12 @@ type Notice  = Msg "NOTICE" '[NonEmpty Channel, Message]
 
 -- User-based Queries -----------
 
--- TODO: Proper Mask type
-type Who     = Msg "WHO" '[Maybe Text, Flag "o"]
-type WhoIs   = Msg "WHOIS" '[Maybe Text, NonEmpty Text]
-type WhoWas  = Msg "WHOWAS" '[Text, Maybe (Word, Maybe Text)]
+type Who     = Msg "WHO" '[Maybe Mask, Flag "o"]
+type WhoIs   = Msg "WHOIS" '[Maybe Target, NonEmpty Mask]
+type WhoWas  = Msg "WHOWAS" '[NonEmpty Nickname, Maybe (Word, Maybe Target)]
 
 -- Misc -------------------------
 
-type Ping    = Msg "PING" '[Text, Maybe Text]
+type Ping    = Msg "PING" '[Target, Maybe Target]
 type Pong    = Msg "PONG" '[Text, Maybe Text]
 type Error   = Msg "ERROR" '[Message]
