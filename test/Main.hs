@@ -109,12 +109,28 @@ chanOps = describe "Channel Operations" $ do
                 `shouldRoundtrip` "SQUIT irc.tsahyt.com :bye\n"
 
     describe "UMode" $ do
-        it "has format 'MODE ...'" $ do
-            expectationFailure "TODO: Implement MODE"
+        it "has format 'MODE <nickname> *(('+'/'-')*(<mode char>))" $ do
+            (build "WiZ" [ModeFlags RemoveMode "w"] :: UMode) 
+                `shouldRoundtrip` "MODE WiZ -w\n"
+            (build "Angel" [ModeFlags AddMode "i"] :: UMode)
+                `shouldRoundtrip` "MODE Angel +i\n"
+            (build "WiZ" [ModeFlags RemoveMode "o"] :: UMode)
+                `shouldRoundtrip` "MODE WiZ -o\n"
 
     describe "CMode" $ do
-        it "has format 'MODE ...'" $ do
-            expectationFailure "TODO: Implement MODE"
+        it "has format 'MODE <channel> *(('+'/'-') <modes> <params>))" $ do
+            (build "#Finnish" [(ModeFlags AddMode "imI", "*!*@*.fi")] :: CMode)
+                `shouldRoundtrip` "MODE #Finnish +imI *!*@*.fi\n"
+            (build "#Finnish" [(ModeFlags AddMode "o", "Kilroy")] :: CMode)
+                `shouldRoundtrip` "MODE #Finnish +o Kilroy\n"
+            (build "&oulu" [(ModeFlags AddMode "b", "*!*@*.edu")
+                           ,(ModeFlags AddMode "e", "*!*@*.bu.edu")] :: CMode)
+                `shouldRoundtrip` "MODE &oulu +b *!*@*.edu +e *!*@*.bu.edu\n"
+
+    describe "GetMode" $ do
+        it "has format 'MODE <channel> *<mode>'" $ do
+            (build "#meditation" "e" :: GetMode) `shouldRoundtrip`
+                "MODE #meditation e\n"
 
     describe "Names" $ do
         it "has format 'NAMES [<channel>{,<channel>} [<target>]]'" $ do

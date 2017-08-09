@@ -19,6 +19,7 @@ module Network.Yak.Client
     SQuit,
     UMode,
     CMode,
+    GetMode,
     Names,
     List,
     Invite,
@@ -64,8 +65,16 @@ type Join    = Msg "JOIN" '[NonEmpty Channel]
 type Part    = Msg "PART" '[NonEmpty Channel, Maybe Message]
 type Quit    = Msg "QUIT" '[Message]
 type SQuit   = Msg "SQUIT" '[Target, Message]
-type UMode   = Msg "MODE" '[Nickname, SList (ModeFlags, Text)]
+
+-- | User modes
+type UMode   = Msg "MODE" '[Nickname, SList ModeFlags]
+
+-- | Channel modes
 type CMode   = Msg "MODE" '[Channel, SList (ModeFlags, Text)]
+
+-- | Retrieving modes. This requires special syntax as no @+@ or @-@ is used
+type GetMode = Msg "MODE" '[Channel, Text]
+
 type Names   = Msg "NAMES" '[[Channel], Maybe Target]
 type List    = Msg "LIST" '[[Channel], Maybe Target]
 type Invite  = Msg "INVITE" '[Nickname, Channel]

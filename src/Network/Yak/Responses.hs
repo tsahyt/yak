@@ -85,7 +85,7 @@ type RplListend           = Msg "323" '[Message]
 type RplUniqopis          = Msg "325" '[Channel, Nickname]
 
 -- | > "<channel> <mode> <mode params>"
-type RplChannelmodeis     = Msg "324" '[]
+type RplChannelmodeis     = Msg "324" '[Channel, ModeFlags, Text]
 
 -- | > "<channel> :No topic is set"
 type RplNotopic           = Msg "331" '[Channel, Message]

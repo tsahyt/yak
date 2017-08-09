@@ -51,7 +51,7 @@ where
 import Control.Applicative
 import Control.Lens
 import Data.List (intersperse)
-import Data.List.NonEmpty (NonEmpty(..), fromList)
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
@@ -63,6 +63,7 @@ import Data.Kind (Type)
 import Data.Text.Encoding
 import Data.String
 import GHC.TypeLits
+import GHC.Exts (IsList (..))
 
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as B
@@ -193,6 +194,12 @@ instance (Parameter a, Parameter b) => Parameter (Either a b) where
 newtype SList a = SList { getSList :: [a] }
     deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
               Traversable, Monoid, Alternative)
+
+-- | Syntactic sugar for construction
+instance IsList (SList a) where
+    type Item (SList a) = a
+    fromList = SList
+    toList = getSList
 
 instance Parameter a => Parameter (SList a) where
     render = mconcat . intersperse " " . map render . getSList
