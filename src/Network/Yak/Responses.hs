@@ -1,436 +1,295 @@
--- | All response codes as types, as defined by RFC 2812
--- <https://tools.ietf.org/html/rfc2812>. Please note that the argument parsing
+-- | All response codes as types, as defined by the current Ircv3 spec
+-- <https://modern.ircdocs.horse/>. Please note that the argument parsing
 -- in many of these is crude and the text is parsed only as a catch-all
 -- 'Message' type, since there may be difference between implementations on the
 -- server side, or even per network! In some places, responses have been
--- hard-coded as defined in the IRC in order to extract necessary information.
+-- hard-coded as defined in the Irc in order to extract necessary information.
 -- If you disagree with these choices, pull requests are welcome.
 --
 -- Also note that you probably want to import this module qualified, or import
 -- just what you need, as it exports 135 type synonyms.
 --
--- In case your use case allows more precise parsing, or you need response codes
--- not listed in the RFC, you can always hide the relevant types and define your
--- own by simply building the appropriate type synonym.
-{-# LANGUAGE DataKinds #-}
+-- In case your use case allows more precise parsing, or you need server
+-- specific response codes not listed, you can always hide the relevant types
+-- and define your own by simply building the appropriate type synonym.
+{-# Language DataKinds #-}
 module Network.Yak.Responses
 where
 
-import Data.Text (Text)
 import Network.Yak.Types
 
--- | > "Welcome to the Internet Relay Network <nick>!<user>@<host>"
-type RplWelcome           = Msg "001" '[Message]
+-- | > "<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
+type RplWelcome = Msg "001" '[]
 
--- | > "Your host is <servername>, running version <ver>"
-type RplYourhost          = Msg "002" '[Message]
+-- | > "<client> :Your host is <servername>, running version <version>"
+type RplYourhost = Msg "002" '[]
 
--- | > "This server was created <date>"
-type RplCreated           = Msg "003" '[Message]
+-- | > "<client> :This server was created <datetime>"
+type RplCreated = Msg "003" '[]
 
--- | > "<servername> <version> <available user modes> <available channel modes>"
-type RplMyinfo            = Msg "004" '[Message]
+-- | > "<client> <servername> <version> <available user modes> <available channel modes> [<channel modes with a parameter>]"
+type RplMyinfo = Msg "004" '[]
 
--- | > "Try server <server name>, port <port number>"
-type RplBounce            = Msg "005" '[Message]
+-- | > "<client> <1-13 tokens> :are supported by this server"
+type RplIsupport = Msg "005" '[]
 
--- | > ":*1<reply> *( " " <reply> )"
-type RplUserhost          = Msg "302" '[]
+-- | > "<client> <hostname> <port> :<info>"
+type RplBounce = Msg "010" '[]
 
--- | > ":*1<nick> *( " " <nick> )"
-type RplIson              = Msg "303" '[]
+-- | > "<client> <user modes>"
+type RplUmodeis = Msg "221" '[]
 
--- | > "<nick> :<away message>"
-type RplAway              = Msg "301" '[Nickname, Message]
+-- | > "<client> :There are <u> users and <i> invisible on <s> servers"
+type RplLuserclient = Msg "251" '[]
 
--- | > ":You are no longer marked as being away"
-type RplUnaway            = Msg "305" '[Message]
+-- | > "<client> <ops> :operator(s) online"
+type RplLuserop = Msg "252" '[]
 
--- | > ":You have been marked as being away"
-type RplNowaway           = Msg "306" '[Message]
+-- | > "<client> <connections> :unknown connection(s)"
+type RplLuserunknown = Msg "253" '[]
 
--- | > "<nick> <user> <host> * :<real name>"
-type RplWhoisuser         = Msg "311" '[Nickname, Username, Target, 
-                                        Unused "*", Message]
+-- | > "<client> <channels> :channels formed"
+type RplLuserchannels = Msg "254" '[]
 
--- | > "<nick> <server> :<server info>"
-type RplWhoisserver       = Msg "312" '[Nickname, Target, Message]
+-- | > "<client> :I have <c> clients and <s> servers"
+type RplLuserme = Msg "255" '[]
 
--- | > "<nick> :is an Irc operator"
-type RplWhoisoperator     = Msg "313" '[Nickname, Message]
+-- | > "<client> [<server>] :Administrative info"
+type RplAdminme = Msg "256" '[]
 
--- | > "<nick> <integer> :seconds idle"
-type RplWhoisidle         = Msg "317" '[Nickname, Int, Message]
+-- | > "<client> :<info>"
+type RplAdminemail = Msg "259" '[]
 
--- | > "<nick> :End of Whois list"
-type RplEndofwhois        = Msg "318" '[Nickname, Message]
+-- | > "<client> <command> :Please wait a while and try again."
+type RplTryagain = Msg "263" '[]
 
--- | > "<nick> :*( ( "@" / "+" ) <channel> " " )"
-type RplWhoischannels     = Msg "319" '[]
+-- | > "<client> [<u> <m>] :Current local users <u>, max <m>"
+type RplLocalusers = Msg "265" '[]
 
--- | > "<nick> <user> <host> * :<real name>"
-type RplWhowasuser        = Msg "314" '[Nickname, Username, Target, 
-                                        Unused "*", Message]
+-- | > "<client> [<u> <m>] :Current global users <u>, max <m>"
+type RplGlobalusers = Msg "266" '[]
 
--- | > "<nick> :End of Whowas"
-type RplEndofwhowas       = Msg "369" '[Nickname, Message]
+-- | > "<client> <nick> :has client certificate fingerprint <fingerprint>"
+type RplWhoiscertfp = Msg "276" '[]
 
--- | > "<channel> <# visible> :<topic>"
-type RplList              = Msg "322" '[Channel, Int, Message]
+-- | Undefined format
+type RplNone = Msg "300" '[]
 
--- | > ":End of List"
-type RplListend           = Msg "323" '[Message]
+-- | > "<client> <nick> :<message>"
+type RplAway = Msg "301" '[]
 
--- | > "<channel> <nickname>"
-type RplUniqopis          = Msg "325" '[Channel, Nickname]
+-- | > "<client> :[<reply>{ <reply>}]"
+type RplUserhost = Msg "302" '[]
 
--- | > "<channel> <mode> <mode params>"
-type RplChannelmodeis     = Msg "324" '[Channel, ModeFlags, Text]
+-- | > "<client> :[<nickname>{ <nickname>}]"
+type RplIson = Msg "303" '[]
 
--- | > "<channel> :No topic is set"
-type RplNotopic           = Msg "331" '[Channel, Message]
+-- | > "<client> :You are no longer marked as being away"
+type RplUnaway = Msg "305" '[]
 
--- | > "<channel> :<topic>"
-type RplTopic             = Msg "332" '[Channel, Message]
+-- | > "<client> :You have been marked as being away"
+type RplNowaway = Msg "306" '[]
 
--- | > "<channel> <nick>"
-type RplInviting          = Msg "341" '[Channel, Nickname]
+-- | > "<client> <nick> <username> <host> * :<realname>"
+type RplWhoisuser = Msg "311" '[]
 
--- | > "<user> :Summoning user to Irc"
-type RplSummoning         = Msg "342" '[Username, Message]
+-- | > "<client> <nick> <server> :<server info>"
+type RplWhoisserver = Msg "312" '[]
 
--- | > "<channel> <invitemask>"
-type RplInvitelist        = Msg "346" '[Channel, Mask]
+-- | > "<client> <nick> :is an Irc operator"
+type RplWhoisoperator = Msg "313" '[]
 
--- | > "<channel> :End of channel invite list"
-type RplEndofinvitelist   = Msg "347" '[Channel, Message]
+-- | > "<client> <nick> <username> <host> * :<realname>"
+type RplWhowasuser = Msg "314" '[]
 
--- | > "<channel> <exceptionmask>"
-type RplExceptlist        = Msg "348" '[Channel, Mask]
+-- | > "<client> <nick> <secs> [<signon>] :seconds idle, signon time"
+type RplWhoisidle = Msg "317" '[]
 
--- | > "<channel> :End of channel exception list"
-type RplEndofexceptlist   = Msg "349" '[Channel, Message]
+-- | > "<client> <nick> :End of /Whois list"
+type RplEndofwhois = Msg "318" '[]
 
--- | > "<version>.<debuglevel> <server> :<comments>"
-type RplVersion           = Msg "351" '[Text, Target, Message]
+-- | > "<client> <nick> :[prefix]<channel>{ [prefix]<channel>}"
+type RplWhoischannels = Msg "319" '[]
 
--- | > "<channel> <user> <host> <server> <nick> ( "H" / "G" > ["*"] 
---   > [ ( "@" / "+" ) ] :<hopcount> <real name>"
-type RplWhoreply          = Msg "352" '[]
+-- | > "<client> Channel :Users  Name"
+type RplListstart = Msg "321" '[]
 
--- | > "<name> :End of Who list"
-type RplEndofwho          = Msg "315" '[Channel, Message]
+-- | > "<client> <channel> <visible clients> :<topic>"
+type RplList = Msg "322" '[]
 
--- | > "( " = " / "*" / "@" ) <channel> :[ "@" / "+" ] <nick> *( " " 
---   > [ "@" / "+" ] <nick> )
-type RplNamreply          = Msg "353" '[]
+-- | > "<client> :End of /List"
+type RplListend = Msg "323" '[]
 
--- | > "<channel> :End of Names list"
-type RplEndofnames        = Msg "366" '[Channel, Message]
+-- | > "<client> <channel> <modestring> <mode arguments>..."
+type RplChannelmodeis = Msg "324" '[]
 
--- | > "<mask> <server> :<hopcount> <server info>"
-type RplLinks             = Msg "364" '[Mask, Target, Message]
+-- | > "<client> <channel> :No topic is set"
+type RplNotopic = Msg "331" '[]
 
--- | > "<mask> :End of Links list"
-type RplEndoflinks        = Msg "365" '[Mask, Message]
+-- | > "<client> <channel> :<topic>"
+type RplTopic = Msg "332" '[]
 
--- | > "<channel> <banmask>"
-type RplBanlist           = Msg "367" '[Channel, Mask]
+-- | > "<client> <channel> <nick> <setat>"
+type RplTopictime = Msg "333" '[]
 
--- | > "<channel> :End of channel ban list"
-type RplEndofbanlist      = Msg "368" '[Channel, Message]
+-- | > "<client> <channel> <nick>"
+type RplInviting = Msg "341" '[]
 
--- | > ":<string>"
-type RplInfo              = Msg "371" '[Message]
+-- | > "<client> <channel> <mask>"
+type RplInvitelist = Msg "346" '[]
 
--- | > ":End of Info list"
-type RplEndofinfo         = Msg "374" '[Message]
+-- | > "<client> <channel> :End of channel invite list"
+type RplEndofinvitelist = Msg "349" '[]
 
--- | > ":- <server> Message of the day - "
-type RplMotdstart         = Msg "375" '[Message]
+-- | > "<client> <channel> <mask>"
+type RplExceptlist = Msg "348" '[]
 
--- | > ":- <text>"
-type RplMotd              = Msg "372" '[Message]
+-- | > "<client> <channel> :End of channel exception list"
+type RplEndofexceptlist = Msg "349" '[]
 
--- | > ":End of Motd command"
-type RplEndofmotd         = Msg "376" '[Message]
+-- | > "<client> <version> <server> :<comments>"
+type RplVersion = Msg "351" '[]
 
--- | > ":You are now an Irc operator"
-type RplYoureoper         = Msg "381" '[Message]
+-- | > "<client> <symbol> <channel> :[prefix]<nick>{ [prefix]<nick>}"
+type RplNamreply = Msg "353" '[]
 
--- | > "<config file> :Rehashing"
-type RplRehashing         = Msg "382" '[Text, Message]
+-- | > "<client> <channel> :End of /Names list"
+type RplEndofnames = Msg "366" '[]
 
--- | > "You are service <servicename>"
-type RplYoureservice      = Msg "383" '[Message]
+-- | > "<client> <channel> <mask>"
+type RplBanlist = Msg "367" '[]
 
--- | The time format used here can differ server to server, hence it is returned
--- as a 'Message' rather than as some suitable time type. May be subject to
--- change in the future.
--- 
--- > "<server> :<string showing server's local time>"
-type RplTime              = Msg "391" '[Target, Message]
+-- | > "<client> <channel> :End of channel ban list"
+type RplEndofbanlist = Msg "368" '[]
 
--- | > ":UserId   Terminal  Host"
-type RplUsersstart        = Msg "392" '[Message]
+-- | > "<client> <nick> :End of Whowas"
+type RplEndofwhowas = Msg "369" '[]
 
--- | > ":<username> <ttyline> <hostname>"
-type RplUsers             = Msg "393" '[Message]
+-- | > "<client> :- <server> Message of the day - "
+type RplMotdstart = Msg "375" '[]
 
--- | > ":End of users"
-type RplEndofusers        = Msg "394" '[Message]
+-- | > "<client> :<line of the motd>"
+type RplMotd = Msg "372" '[]
 
--- | > ":Nobody logged in"
-type RplNousers           = Msg "395" '[Message]
+-- | > "<client> :End of /Motd command."
+type RplEndofmotd = Msg "376" '[]
 
--- | > "Link <version & debug level> <destination> <next server> 
---   > V<protocol> version> <link uptime in seconds> <backstream sendq> 
---   > <upstream sendq>"
-type RplTracelink         = Msg "200" '[Message]
+-- | > "<client> :You are now an Irc operator"
+type RplYoureoper = Msg "381" '[]
 
--- | > "Try. <class> <server>"
-type RplTraceconnecting   = Msg "201" '[Message]
+-- | > "<client> <config file> :Rehashing"
+type RplRehashing = Msg "382" '[]
 
--- | > "H.S. <class> <server>"
-type RplTracehandshake    = Msg "202" '[Message]
+-- | > "<client> <command>{ <subcommand>} :<info>"
+type ErrUnknownerror = Msg "400" '[]
 
--- | > "???? <class> [<client Ip address in dot form>]"
-type RplTraceunknown      = Msg "203" '[Message]
+-- | > "<client> <nickname> :No such nick/channel"
+type ErrNosuchnick = Msg "401" '[]
 
--- | > "Oper <class> <nick>"
-type RplTraceoperator     = Msg "204" '[Message]
+-- | > "<client> <server name> :No such server"
+type ErrNosuchserver = Msg "402" '[]
 
--- | > "User <class> <nick>"
-type RplTraceuser         = Msg "205" '[Message]
+-- | > "<client> <channel> :No such channel"
+type ErrNosuchchannel = Msg "403" '[]
 
--- | > "Serv <class> <int>S <int>C <server> <nick!user|*!*>@<host|server>
---   > V<protocol version>"
-type RplTraceserver       = Msg "206" '[Message]
+-- | > "<client> <channel> :Cannot send to channel"
+type ErrCannotsendtochan = Msg "404" '[]
 
--- | > "Service <class> <name> <type> <active type>"
-type RplTraceservice      = Msg "207" '[Message]
+-- | > "<client> <channel> :You have joined too many channels"
+type ErrToomanychannels = Msg "405" '[]
 
--- | > "<newtype> 0 <client name>"
-type RplTracenewtype      = Msg "208" '[Message]
+-- | > "<client> <command> :Unknown command"
+type ErrUnknowncommand = Msg "421" '[]
 
--- | > "Class <class> <count>"
-type RplTraceclass        = Msg "209" '[Message]
+-- | > "<client> :Motd File is missing"
+type ErrNomotd = Msg "422" '[]
 
--- | > "File <logfile> <debug level>"
-type RplTracelog          = Msg "261" '[Message]
+-- | > "<client> <nick> :Erroneus nickname"
+type ErrErroneusnickname = Msg "432" '[]
 
--- | > "<server name> <version & debug level> :End of Trace"
-type RplTraceend          = Msg "262" '[Text, Text, Message]
+-- | > "<client> <nick> :Nickname is already in use"
+type ErrNicknameinuse = Msg "433" '[]
 
--- | > "<linkname> <sendq> <sent messages> <sent Kbytes> <received messages>
---   > <received Kbytes> <time open>"
-type RplStatslinkinfo     = Msg "211" '[]
+-- | > "<client> :You have not registered"
+type ErrNotregistered = Msg "451" '[]
 
--- | > "<command> <count> <byte count> <remote count>"
-type RplStatscommands     = Msg "212" '[]
+-- | > "<client> <command> :Not enough parameters"
+type ErrNeedmoreparams = Msg "461" '[]
 
--- | > "<stats letter> :End of Stats report"
-type RplEndofstats        = Msg "219" '[]
+-- | > "<client> :You may not reregister"
+type ErrAlreadyregistered = Msg "462" '[]
 
--- | > ":Server Up %d days %d:%02d:%02d"
-type RplStatsuptime       = Msg "242" '[]
+-- | > "<client> :Password incorrect"
+type ErrPasswdmismatch = Msg "464" '[]
 
--- | > "O <hostmask> * <name>"
-type RplStatsoline        = Msg "243" '[]
+-- | > "<client> :You are banned from this server."
+type ErrYourebannedcreep = Msg "465" '[]
 
--- | > "<user mode string>"
-type RplUmodeis           = Msg "221" '[Text]
+-- | > "<client> <channel> :Cannot join channel (+l)"
+type ErrChannelisfull = Msg "471" '[]
 
--- | > "<name> <server> <mask> <type> <hopcount> <info>"
-type RplServlist          = Msg "234" '[Text, Target, Mask, Text, Int, Text]
+-- | > "<client> <modechar> :is unknown mode char to me"
+type ErrUnknownmode = Msg "472" '[]
 
--- | > "<mask> <type> :End of service listing"
-type RplServlistend       = Msg "235" '[Mask, Text, Message]
+-- | > "<client> <channel> :Cannot join channel (+i)"
+type ErrInviteonlychan = Msg "473" '[]
 
--- | > ":There are <integer> users and <integer> services on <integer> servers"
-type RplLuserclient       = Msg "251" '[Message]
+-- | > "<client> <channel> :Cannot join channel (+b)"
+type ErrBannedfromchan = Msg "474" '[]
 
--- | > "<integer> :operator(s) online"
-type RplLuserop           = Msg "252" '[Int, Message]
+-- | > "<client> <channel> :Cannot join channel (+k)"
+type ErrBadchannelkey = Msg "475" '[]
 
--- | > "<integer> :unknown connection(s)"
-type RplLuserunknown      = Msg "253" '[Int, Message]
+-- | > "<client> :Permission Denied- You're not an Irc operator"
+type ErrNoprivileges = Msg "481" '[]
 
--- | > "<integer> :channels formed"
-type RplLuserchannels     = Msg "254" '[Int, Message]
+-- | > "<client> <channel> :You're not channel operator"
+type ErrChanoprivsneeded = Msg "482" '[]
 
--- | > ":I have <integer> clients and <integer> servers"
-type RplLuserme           = Msg "255" '[Message]
+-- | > "<client> :You cant kill a server!"
+type ErrCantkillserver = Msg "483" '[]
 
--- | > "<server> :Administrative info"
-type RplAdminme           = Msg "256" '[Target, Message]
+-- | > "<client> :No O-lines for your host"
+type ErrNooperhost = Msg "491" '[]
 
--- | > ":<admin info>"
-type RplAdminloc1         = Msg "257" '[Message]
+-- | > "<client> :Unknown Mode flag"
+type ErrUmodeunknownflag = Msg "501" '[]
 
--- | > ":<admin info>"
-type RplAdminloc2         = Msg "258" '[Message]
+-- | > "<client> :Cant change mode for other users"
+type ErrUsersdontmatch = Msg "502" '[]
 
--- | > ":<admin info>"
-type RplAdminemail        = Msg "259" '[Message]
+-- | > "<client> :Starttls successful, proceed with Tls handshake"
+type RplStarttls = Msg "670" '[]
 
--- | > "<command> :Please wait a while and try again."
-type RplTryagain          = Msg "263" '[Text, Message]
+-- | > "<client> :Starttls failed (Wrong moon phase)"
+type ErrStarttls = Msg "691" '[]
 
--- | > "<nickname> :No such nick/channel"
-type ErrNosuchnick        = Msg "401" '[Nickname, Message]
+-- | > "<client> <priv> :Insufficient oper privileges."
+type ErrNoprivs = Msg "723" '[]
 
--- | > "<server name> :No such server"
-type ErrNosuchserver      = Msg "402" '[Target, Message]
+-- | > "<client> <nick>!<user>@<host> <account> :You are now logged in as <username>"
+type RplLoggedin = Msg "900" '[]
 
--- | > "<channel name> :No such channel"
-type ErrNosuchchannel     = Msg "403" '[Channel, Message]
+-- | > "<client> <nick>!<user>@<host> :You are now logged out"
+type RplLoggedout = Msg "901" '[]
 
--- | > "<channel name> :Cannot send to channel"
-type ErrCannotsendtochan  = Msg "404" '[Channel, Message]
+-- | > "<client> :You must use a nick assigned to you"
+type ErrNicklocked = Msg "902" '[]
 
--- | > "<channel name> :You have joined too many channels"
-type ErrToomanychannels   = Msg "405" '[Channel, Message]
+-- | > "<client> :Sasl authentication successful"
+type RplSaslsuccess = Msg "903" '[]
 
--- | > "<nickname> :There was no such nickname"
-type ErrWasnosuchnick     = Msg "406" '[Nickname, Message]
+-- | > "<client> :Sasl authentication failed"
+type ErrSaslfail = Msg "904" '[]
 
--- | > "<target> :<error code> recipients. <abort message>"
-type ErrToomanytargets    = Msg "407" '[Target, Message]
+-- | > "<client> :Sasl message too long"
+type ErrSasltoolong = Msg "905" '[]
 
--- | > "<service name> :No such service"
-type ErrNosuchservice     = Msg "408" '[Text, Message]
+-- | > "<client> :Sasl authentication aborted"
+type ErrSaslaborted = Msg "906" '[]
 
--- | > ":No origin specified"
-type ErrNoorigin          = Msg "409" '[Message]
+-- | > "<client> :You have already authenticated using Sasl"
+type ErrSaslalready = Msg "907" '[]
 
--- | > ":No recipient given (<command>)"
-type ErrNorecipient       = Msg "411" '[Message]
-
--- | > ":No text to send"
-type ErrNotexttosend      = Msg "412" '[Message]
-
--- | > "<mask> :No toplevel domain specified"
-type ErrNotoplevel        = Msg "413" '[Mask, Message]
-
--- | > "<mask> :Wildcard in toplevel domain"
-type ErrWildtoplevel      = Msg "414" '[Mask, Message]
-
--- | > "<mask> :Bad Server/host mask"
-type ErrBadmask           = Msg "415" '[Mask, Message]
-
--- | > "<command> :Unknown command"
-type ErrUnknowncommand    = Msg "421" '[Text, Message]
-
--- | > ":Motd File is missing"
-type ErrNomotd            = Msg "422" '[Message]
-
--- | > "<server> :No administrative info available"
-type ErrNoadmininfo       = Msg "423" '[Target]
-
--- | > ":File error doing <file op> on <file>"
-type ErrFileerror         = Msg "424" '[Message]
-
--- | > ":No nickname given"
-type ErrNonicknamegiven   = Msg "431" '[Message]
-
--- | > "<nick> :Erroneous nickname"
-type ErrErroneusnickname  = Msg "432" '[Nickname, Message]
-
--- | > "<nick> :Nickname is already in use"
-type ErrNicknameinuse     = Msg "433" '[Nickname, Message]
-
--- | > "<nick> :Nickname collision Kill from <user>@<host>"
-type ErrNickcollision     = Msg "436" '[Nickname, Message]
-
--- | > "<nick/channel> :Nick/channel is temporarily unavailable"
-type ErrUnavailresource   = Msg "437" '[Either Nickname Channel, Message]
-
--- | > "<nick> <channel> :They aren't on that channel"
-type ErrUsernotinchannel  = Msg "441" '[Nickname, Channel]
-
--- | > "<channel> :You're not on that channel"
-type ErrNotonchannel      = Msg "442" '[Channel, Message]
-
--- | > "<user> <channel> :is already on channel"
-type ErrUseronchannel     = Msg "443" '[Username, Channel, Message]
-
--- | > "<user> :User not logged in"
-type ErrNologin           = Msg "444" '[Username, Message]
-
--- | > ":Summon has been disabled"
-type ErrSummondisabled    = Msg "445" '[Message]
-
--- | > ":Users has been disabled"
-type ErrUsersdisabled     = Msg "446" '[Message]
-
--- | > ":You have not registered"
-type ErrNotregistered     = Msg "451" '[Message]
-
--- | > "<command> :Not enough parameters"
-type ErrNeedmoreparams    = Msg "461" '[Text, Message]
-
--- | > ":Unauthorized command (already registered)"
-type ErrAlreadyregistred  = Msg "462" '[Message]
-
--- | > ":Your host isn't among the privileged"
-type ErrNopermforhost     = Msg "463" '[Message]
-
--- | > ":Password incorrect"
-type ErrPasswdmismatch    = Msg "464" '[Message]
-
--- | > ":You are banned from this server"
-type ErrYourebannedcreep  = Msg "465" '[Message]
-
-type ErrYouwillbebanned   = Msg "466" '[]
-
--- | > "<channel> :Channel key already set"
-type ErrKeyset            = Msg "467" '[Channel, Message]
-
--- | > "<channel> :Cannot join channel (+l)"
-type ErrChannelisfull     = Msg "471" '[Channel, Message]
-
--- | > "<char> :is unknown mode char to me for <channel>"
-type ErrUnknownmode       = Msg "472" '[Char, Message]
-
--- | > "<channel> :Cannot join channel (+i)"
-type ErrInviteonlychan    = Msg "473" '[Channel, Message]
-
--- | > "<channel> :Cannot join channel (+b)"
-type ErrBannedfromchan    = Msg "474" '[Channel, Message]
-
--- | > "<channel> :Cannot join channel (+k)"
-type ErrBadchannelkey     = Msg "475" '[Channel, Message]
-
--- | > "<channel> :Bad Channel Mask"
-type ErrBadchanmask       = Msg "476" '[Channel, Message]
-
--- | > "<channel> :Channel doesn't support modes"
-type ErrNochanmodes       = Msg "477" '[Channel, Message]
-
--- | > "<channel> <char> :Channel list is full"
-type ErrBanlistfull       = Msg "478" '[Channel, Char, Message]
-
--- | > ":Permission Denied- You're not an Irc operator"
-type ErrNoprivileges      = Msg "481" '[Message]
-
--- | > "<channel> :You're not channel operator"
-type ErrChanoprivsneeded  = Msg "482" '[Channel, Message]
-
--- | > ":You can't kill a server!"
-type ErrCantkillserver    = Msg "483" '[Message]
-
--- | > ":Your connection is restricted!"
-type ErrRestricted        = Msg "484" '[Message]
-
--- | > ":You're not the original channel operator"
-type ErrUniqopprivsneeded = Msg "485" '[Message]
-
--- | > ":No O-lines for your host"
-type ErrNooperhost        = Msg "491" '[Message]
-
--- | > ":Unknown Mode flag"
-type ErrUmodeunknownflag  = Msg "501" '[Message]
-
--- | > ":Cannot change mode for other users"
-type ErrUsersdontmatch    = Msg "502" '[Message]
+-- | > "<client> <mechanisms> :are available Sasl mechanisms"
+type RplSaslmechs = Msg "908" '[]
