@@ -1,48 +1,45 @@
--- | Messages for IRC Clients, as defined by RFC 2812,
--- <https://tools.ietf.org/html/rfc2812>. This does not include the responses.
--- See "Network.Yak.Response" for RFC-compliant responses.
+-- | Messages for IRC Clients, implementing the current "living standard", to be
+-- found at <https://modern.ircdocs.horse/>. This module does not include the
+-- responses.  See "Network.Yak.Response" for standard-compliant responses.
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
 module Network.Yak.Client
 (
-    -- * Connection Registration
+    -- * Connection Messages
+    Cap,
+    Authenticate,
     Pass,
     Nick,
     User,
-    Server,
     Oper,
+    Quit,
 
     -- * Channel Operations
     Join,
+    Join0,
     Part,
-    Quit,
-    SQuit,
-    UMode,
-    CMode,
-    GetMode,
+    Topic,
     Names,
     List,
-    Invite,
-    Kick,
-    Topic,
 
-    -- * Server Queries
-    Version,
+    -- * Server Queries and Commands
     Motd,
+    Version,
+    Admin,
+    Connect,
+    Time,
+    Stats,
+    Info,
+    Mode,
 
     -- * Sending Messages
-    PrivMsg,
+    Privmsg,
     Notice,
 
-    -- * User-based Queries
-    Who,
-    WhoIs,
-    WhoWas,
+    -- * Optional Messages
+    Userhost,
 
-    -- * Misc
-    Ping,
-    Pong,
-    Error
+    -- * Miscellaneous Messages
+    Kill
 )
 where
 
@@ -51,54 +48,85 @@ import Data.List.NonEmpty (NonEmpty)
 import Network.Yak.Types
 import Data.Word (Word)
 
--- Connection Registration ------
+type TODO = ()
 
-type Pass    = Msg "PASS" '[Text]
-type Nick    = Msg "NICK" '[Nickname]
-type User    = Msg "USER" '[Username, Word, Unused "*", Message]
-type Server  = Msg "SERVER" '[Target, Word, Message]
-type Oper    = Msg "OPER" '[Username, Text]
+-- Connection Messages
+-- | > CAP <subcommand> [:<capabilities>]
+type Cap = Msg "CAP" '[Text, Message]
 
--- Channel Operations -----------
+-- | > AUTHENTICATE
+type Authenticate = Msg "AUTHENTICATE" '[]
 
-type Join    = Msg "JOIN" '[NonEmpty Channel]
-type Part    = Msg "PART" '[NonEmpty Channel, Maybe Message]
-type Quit    = Msg "QUIT" '[Message]
-type SQuit   = Msg "SQUIT" '[Target, Message]
+-- | > PASS <password>
+type Pass = Msg "PASS" '[Text]
 
--- | User modes
-type UMode   = Msg "MODE" '[Nickname, SList ModeFlags]
+-- | > NICK <nickname>
+type Nick = Msg "NICK" '[Nickname]
 
--- | Channel modes
-type CMode   = Msg "MODE" '[Channel, SList (ModeFlags, Text)]
+-- | > USER <username> 0 * <realname>
+type User = Msg "USER" '[Username, Word, Unused "*", Message]
 
--- | Retrieving modes. This requires special syntax as no @+@ or @-@ is used
-type GetMode = Msg "MODE" '[Channel, Text]
+-- | > OPER <name> <password>
+type Oper = Msg "OPER" '[Nickname, Text]
 
-type Names   = Msg "NAMES" '[[Channel], Maybe Target]
-type List    = Msg "LIST" '[[Channel], Maybe Target]
-type Invite  = Msg "INVITE" '[Nickname, Channel]
-type Kick    = Msg "KICK" '[NonEmpty Channel, NonEmpty Nickname, Maybe Message]
-type Topic   = Msg "TOPIC" '[Channel, Maybe Message]
+-- | > QUIT [<reason>]
+type Quit = Msg "QUIT" '[Message]
 
--- Server Queries ---------------
 
-type Version = Msg "VERSION" '[Maybe Target]
-type Motd    = Msg "MOTD" '[Maybe Target]
+-- Channel Operations
+-- | > JOIN <channel>{,<channel>} [<key>{,<key>}]
+type Join = Msg "JOIN" '[NonEmpty Channel, NonEmpty Text]
+type Join0 = Msg "JOIN" '[Unused "0"]
 
--- Sending Messages -------------
+-- | > PART <channel>{,<channel>} [<reason>]
+type Part = Msg "PART" '[NonEmpty Channel, Message]
 
-type PrivMsg = Msg "PRIVMSG" '[NonEmpty Channel, Message]
-type Notice  = Msg "NOTICE" '[NonEmpty Channel, Message]
+-- | > TOPIC <channel> [<topic>]
+type Topic = Msg "TOPIC" '[Channel, Message]
 
--- User-based Queries -----------
+-- | > NAMES [<channel>{,<channel>}]
+type Names = Msg "NAMES" '[NonEmpty Channel]
 
-type Who     = Msg "WHO" '[Maybe Mask, Flag "o"]
-type WhoIs   = Msg "WHOIS" '[Maybe Target, NonEmpty Mask]
-type WhoWas  = Msg "WHOWAS" '[NonEmpty Nickname, Maybe (Word, Maybe Target)]
+-- | > LIST [<channel>{,<channel>}] [<elistcond>{,<elistcond>}]
+type List = Msg "LIST" '[NonEmpty Channel, Maybe Text]
 
--- Misc -------------------------
 
-type Ping    = Msg "PING" '[Target, Maybe Target]
-type Pong    = Msg "PONG" '[Text, Maybe Text]
-type Error   = Msg "ERROR" '[Message]
+-- Server Queries and Commands
+-- | > MOTD [<target>]
+type Motd = Msg "MOTD" '[Target]
+
+-- | > VERSION [<target>]
+type Version = Msg "VERSION" '[Target]
+
+-- | > ADMIN [<target>]
+type Admin = Msg "ADMIN" '[Target]
+
+-- | > CONNECT <target server> [<port> [<remote server>]]
+type Connect = Msg "CONNECT" '[Target, Maybe (Int, Maybe Target)]
+
+-- | > TIME [<server>]
+type Time = Msg "TIME" '[Target]
+
+-- | > STATS <query> [<server>]
+type Stats = Msg "STATS" '[TODO, Maybe Target]
+
+-- | > INFO [<target>]
+type Info = Msg "INFO" '[Target]
+
+-- | > MODE <target> [<modestring> [<mode arguments>...]]
+type Mode = Msg "MODE" '[Target, TODO]
+
+-- Sending Messages
+-- | > PRIVMSG <target>{,<target>} <text to be sent>
+type Privmsg = Msg "PRIVMSG" '[NonEmpty (Either Channel Nickname), Message]
+
+-- | > NOTICE <target>{,<target>} <text to be sent>
+type Notice = Msg "NOTICE" '[NonEmpty (Either Channel Nickname), Message]
+
+-- Optional Messages
+-- | > USERHOST <nickname>{ <nickname>}
+type Userhost = Msg "USERHOST" '[NonEmpty Nickname]
+
+-- Miscellaneous Messages
+-- | > KILL <nickname> <comment>
+type Kill = Msg "KILL" '[Nickname, Message]
