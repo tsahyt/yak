@@ -17,6 +17,8 @@ module Network.Yak.Client
     Part,
     Quit,
     SQuit,
+    UMode,
+    CMode,
     Names,
     List,
     Invite,
@@ -62,7 +64,8 @@ type Join    = Msg "JOIN" '[NonEmpty Channel]
 type Part    = Msg "PART" '[NonEmpty Channel, Maybe Message]
 type Quit    = Msg "QUIT" '[Message]
 type SQuit   = Msg "SQUIT" '[Target, Message]
--- TODO: Modes
+type UMode   = Msg "MODE" '[Nickname, SList (ModeFlags, Text)]
+type CMode   = Msg "MODE" '[Channel, SList (ModeFlags, Text)]
 type Names   = Msg "NAMES" '[[Channel], Maybe Target]
 type List    = Msg "LIST" '[[Channel], Maybe Target]
 type Invite  = Msg "INVITE" '[Nickname, Channel]

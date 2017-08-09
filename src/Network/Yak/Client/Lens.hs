@@ -39,6 +39,14 @@ module Network.Yak.Client.Lens
     sQuitServer,
     sQuitComment,
 
+    -- ** UMode
+    uModeNickname,
+    uModeModes,
+
+    -- ** CMode
+    cModeChannel,
+    cModeModes,
+
     -- ** Names
     namesChannels,
     namesTarget,
@@ -115,6 +123,8 @@ makeMsgLenses ''Join    ["channels"]
 makeMsgLenses ''Part    ["channels"]
 makeMsgLenses ''Quit    ["message"]
 makeMsgLenses ''SQuit   ["server", "comment"]
+makeMsgLenses ''UMode   ["nickname", "modes"]
+makeMsgLenses ''CMode   ["channel", "modes"]
 makeMsgLenses ''Names   ["channels", "target"]
 makeMsgLenses ''List    ["channels", "target"]
 makeMsgLenses ''Invite  ["nickname", "channel"]

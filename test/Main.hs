@@ -108,7 +108,11 @@ chanOps = describe "Channel Operations" $ do
             (build "irc.tsahyt.com" (Message "bye") :: SQuit) 
                 `shouldRoundtrip` "SQUIT irc.tsahyt.com :bye\n"
 
-    describe "Mode" $ do
+    describe "UMode" $ do
+        it "has format 'MODE ...'" $ do
+            expectationFailure "TODO: Implement MODE"
+
+    describe "CMode" $ do
         it "has format 'MODE ...'" $ do
             expectationFailure "TODO: Implement MODE"
 

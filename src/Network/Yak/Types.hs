@@ -15,6 +15,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveTraversable #-}
 
 module Network.Yak.Types
 (
@@ -29,6 +30,7 @@ module Network.Yak.Types
     SomeMsg(..),
     Unused(..),
     Flag(..),
+    SList(..),
     Parameter(..),
     PList(..),
     phead,
@@ -41,6 +43,8 @@ module Network.Yak.Types
     Username,
     Mask,
     Target,
+    ModeSign(..),
+    ModeFlags(..)
 )
 where
 
@@ -183,6 +187,16 @@ instance (Parameter a, Parameter b) => Parameter (Either a b) where
     render (Right x) = render x
 
     seize = (Left <$> seize) <|> (Right <$> seize)
+
+-- | Space separated lists. Use with caution, since spaces are also the
+-- separator for 'PList'!
+newtype SList a = SList { getSList :: [a] }
+    deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
+              Traversable, Monoid, Alternative)
+
+instance Parameter a => Parameter (SList a) where
+    render = mconcat . intersperse " " . map render . getSList
+    seize  = SList <$> sepBy seize space
 
 -- | Heterogeneous list of parameters.
 data PList a where
@@ -328,3 +342,21 @@ type Username = Text
 type Nickname = Text
 type Mask = Text
 type Target = Text
+
+data ModeSign = AddMode | RemoveMode
+    deriving (Eq, Show, Ord, Read)
+
+modeSignChar :: ModeSign -> Char
+modeSignChar AddMode = '+'
+modeSignChar RemoveMode = '-'
+
+instance Parameter ModeSign where
+    render = B.singleton . modeSignChar
+    seize = (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
+
+data ModeFlags = ModeFlags ModeSign [Char]
+    deriving (Eq, Show, Ord, Read)
+
+instance Parameter ModeFlags where
+    render (ModeFlags s ss) = B.pack $ modeSignChar s : ss
+    seize = ModeFlags <$> seize <*> many1 (satisfy isAlpha_ascii)
