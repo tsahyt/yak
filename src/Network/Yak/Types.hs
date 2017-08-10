@@ -202,6 +202,12 @@ newtype SList a = SList { getSList :: [a] }
     deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
               Traversable, Monoid, Alternative)
 
+instance Wrapped (SList a) where
+    type Unwrapped (SList a) = [a]
+    _Wrapped' = iso getSList SList
+
+instance (t ~ SList b) => Rewrapped (SList a) t
+
 -- | Syntactic sugar for construction
 instance IsList (SList a) where
     type Item (SList a) = a

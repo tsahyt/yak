@@ -37,6 +37,10 @@ module Network.Yak.Client.Lens
     infoTarget,
     modeTarget,
     modeSetter,
+    modeChannel,
+    modeNick,
+    modeString,
+    modeParams,
  
     -- * Sending Messages
     privmsgTargets,
@@ -58,12 +62,11 @@ module Network.Yak.Client.Lens
     -- * Miscellaneous Messages
     killNick,
     killMessage,
-    modeChannel,
-    modeNick
 )
 where
 
 import Control.Lens
+import Data.Text (Text)
 import Network.Yak.Client
 import Network.Yak.Types
 import Network.Yak.TH
@@ -96,6 +99,12 @@ modeChannel = modeTarget . _Right
 
 modeNick :: Traversal' Mode Nickname
 modeNick = modeTarget . _Left
+
+modeString :: Traversal' Mode ModeString
+modeString = modeSetter . _Just . _1
+
+modeParams :: Traversal' Mode [Text]
+modeParams = modeSetter . _Just . _2 . _Wrapped
 
 privmsgChannel :: Traversal' Privmsg Channel
 privmsgChannel = privmsgTargets . traverse . _Left
