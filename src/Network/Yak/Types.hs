@@ -44,10 +44,7 @@ module Network.Yak.Types
     Hostname,
     Mask,
     ModeSign(..),
-    ModeString,
-    modes,
-    unmodes,
-    ModeString'(..),
+    ModeString(..),
 )
 where
 
@@ -370,87 +367,18 @@ instance Parameter ModeSign where
     render = B.singleton . modeSignChar
     seize = (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
 
--- | Datatype for precisely representing valid mode strings, i.e. strings
--- starting with @+@ or @-@, continuing with some characters where all @+@/@-@
--- have special position.
-type ModeString = ModeString' ModeSign
+newtype ModeString = 
+    ModeString { getModeString :: NonEmpty (ModeSign, [Char]) }
+    deriving (Eq, Show, Ord, Read)
 
--- | Workhorse for 'ModeString'. The type parameter determines the type in the
--- head and can be on of 'ModeSign' or 'Char', as there are no other valid
--- constructors for non-empty mode strings.
-data ModeString' head where
-    MSNil  :: ModeString' empty
-    MSSign :: ModeSign -> ModeString' Char -> ModeString' ModeSign
-    MSChar :: Char -> ModeString' j -> ModeString' Char
+makeWrapped ''ModeString
 
-instance Show (ModeString' head) where
-    show MSNil = ""
-    show (MSSign x xs) = modeSignChar x : show xs
-    show (MSChar x xs) = x : show xs
+instance Parameter ModeString where
+    render = B.pack . concat . toList . fmap go . getModeString
+        where go (x,xs) = modeSignChar x : xs
+    seize  = ModeString . fromList <$> many1 block
+        where block = (,) <$> seize <*> many1 (satisfy isAlpha_ascii)
 
-instance Eq (ModeString' head) where
-    a == b = show a == show b
-
-instance Parameter (ModeString' ModeSign) where
-    render = B.pack . show
-    seize  = do
-        SomeModeString x <- parseSomeModeString
-        case x of
-            MSSign _ _ -> pure x
-            _ -> empty
-
--- | Partial for malformed literals!
-instance IsString (ModeString' ModeSign) where
+instance IsString ModeString where
     fromString = either (error "Invalid ModeString Literal") id 
                . parseOnly seize . B.pack
-
--- | Parse a 'ModeString' into a list of mode characters with their changes.
-modes :: ModeString -> NonEmpty (ModeSign, [Char])
-modes ms = 
-    let ms' = SomeModeString ms 
-     in fromList . reverse $ zip (signs [] ms') (map reverse $ chars [] ms')
-
-    where chars :: [[Char]] -> SomeModeString -> [[Char]]
-          chars acc (SomeModeString MSNil) = acc
-          chars acc (SomeModeString (MSSign _ xs)) = 
-              chars ([] : acc) (SomeModeString xs)
-          chars acc (SomeModeString (MSChar x xs)) =
-              case acc of
-                  (a:as) -> chars ((x : a) : as) (SomeModeString xs)
-                  [] -> chars [[x]] (SomeModeString xs)
-
-          signs :: [ModeSign] -> SomeModeString -> [ModeSign]
-          signs acc (SomeModeString MSNil) = acc
-          signs acc (SomeModeString (MSSign x xs)) =
-              signs (x : acc) (SomeModeString xs)
-          signs acc (SomeModeString (MSChar _ xs)) =
-              signs acc (SomeModeString xs)
-
-unmodes :: NonEmpty (ModeSign, [Char]) -> ModeString
-unmodes = fromString . concat . toList . fmap go
-    where go (x, xs) = modeSignChar x : xs
-
-data SomeModeString where
-    SomeModeString :: forall head. ModeString' head -> SomeModeString
-
-instance Show SomeModeString where
-    show (SomeModeString x) = show x
-
-parseSomeModeString :: Parser SomeModeString
-parseSomeModeString = 
-    choice [ SomeModeString <$> msign
-           , SomeModeString <$> mchar 
-           , pure $ SomeModeString MSNil ]
-    where msign :: Parser (ModeString' ModeSign)
-          msign = do
-              s <- (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
-              x <- parseSomeModeString
-              case x of
-                  SomeModeString c@(MSChar{}) -> pure $ MSSign s c
-                  _ -> empty
-
-          mchar :: Parser (ModeString' Char)
-          mchar = do
-              c <- satisfy isAlpha_ascii
-              SomeModeString x <- parseSomeModeString
-              pure $ MSChar c x
