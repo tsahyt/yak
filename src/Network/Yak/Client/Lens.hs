@@ -40,6 +40,7 @@ module Network.Yak.Client.Lens
     modeChannel,
     modeNick,
     modeString,
+    modeString',
     modeParams,
  
     -- * Sending Messages
@@ -67,6 +68,7 @@ where
 
 import Control.Lens
 import Data.Text (Text)
+import Data.List.NonEmpty
 import Network.Yak.Client
 import Network.Yak.Types
 import Network.Yak.TH
@@ -102,6 +104,13 @@ modeNick = modeTarget . _Left
 
 modeString :: Traversal' Mode ModeString
 modeString = modeSetter . _Just . _1
+
+-- | 'modeString' but under an isomorphism to a non-empty list of mode settings.
+-- This is the same as applying 'modes' and 'unmodes' since the isomorphism used
+-- here is defined exactly like so.
+modeString' :: Traversal' Mode (NonEmpty (ModeSign, [Char]))
+modeString' = modeSetter . _Just . _1 . go
+    where go = iso modes unmodes
 
 modeParams :: Traversal' Mode [Text]
 modeParams = modeSetter . _Just . _2 . _Wrapped

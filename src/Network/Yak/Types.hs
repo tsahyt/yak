@@ -46,6 +46,7 @@ module Network.Yak.Types
     ModeSign(..),
     ModeString,
     modes,
+    unmodes,
     ModeString'(..),
 )
 where
@@ -404,10 +405,10 @@ instance IsString (ModeString' ModeSign) where
                . parseOnly seize . B.pack
 
 -- | Parse a 'ModeString' into a list of mode characters with their changes.
-modes :: ModeString -> [(ModeSign, [Char])]
+modes :: ModeString -> NonEmpty (ModeSign, [Char])
 modes ms = 
     let ms' = SomeModeString ms 
-     in reverse $ zip (signs [] ms') (map reverse $ chars [] ms')
+     in fromList . reverse $ zip (signs [] ms') (map reverse $ chars [] ms')
 
     where chars :: [[Char]] -> SomeModeString -> [[Char]]
           chars acc (SomeModeString MSNil) = acc
@@ -424,6 +425,10 @@ modes ms =
               signs (x : acc) (SomeModeString xs)
           signs acc (SomeModeString (MSChar _ xs)) =
               signs acc (SomeModeString xs)
+
+unmodes :: NonEmpty (ModeSign, [Char]) -> ModeString
+unmodes = fromString . concat . toList . fmap go
+    where go (x, xs) = modeSignChar x : xs
 
 data SomeModeString where
     SomeModeString :: forall head. ModeString' head -> SomeModeString
