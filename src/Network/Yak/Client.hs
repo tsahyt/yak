@@ -135,7 +135,10 @@ type Notice = Msg "NOTICE" '[NonEmpty (Either Channel Nickname), Message]
 
 -- Optional Messages
 -- | > USERHOST <nickname>{ <nickname>}
-type Userhost = Msg "USERHOST" '[NonEmpty Nickname]
+type Userhost = Msg "USERHOST" 
+    '[Nickname, Maybe Nickname, Maybe Nickname, Maybe Nickname, Maybe Nickname]
+    -- because more than 5 would be ridiculous, and obviously we need space
+    -- separation in random places. Thank you, IRC.
 
 -- Miscellaneous Messages
 -- | > KILL <nickname> <comment>
