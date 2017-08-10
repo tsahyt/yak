@@ -95,10 +95,10 @@ makeMsgLenses ''Userhost ["nick1", "nick2", "nick3", "nick4", "nick5"]
 makeMsgLenses ''Kill     ["nick", "message"]
 
 modeChannel :: Traversal' Mode Channel
-modeChannel = modeTarget . _Right
+modeChannel = modeTarget . _Left
 
 modeNick :: Traversal' Mode Nickname
-modeNick = modeTarget . _Left
+modeNick = modeTarget . _Right
 
 modeString :: Traversal' Mode ModeString
 modeString = modeSetter . _Just . _1

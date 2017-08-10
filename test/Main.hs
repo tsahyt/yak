@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
 import Test.Hspec
@@ -12,243 +13,158 @@ import GHC.TypeLits
 
 main :: IO ()
 main = hspec $ do
-    prefixes
-    connReg
-    chanOps
-    srvQueries
-    msgSending
-    usrQueries
-    miscMsgs
+    clientMsgs
 
-prefixes :: Spec
-prefixes = describe "Prefixes" $ do
-    describe "Host" $ do
-        it "example ':tsahyt!tsahyt@user/tsahyt PRIVMSG #0 :foo'" $ do
-            (msgPrefix =<<
-                (fetch ":tsahyt!tsahyt@user/tsahyt PRIVMSG #0 :foo" 
-                       :: Maybe PrivMsg))
-                `shouldBe` Just (PrefixUser 
-                    (Host "tsahyt" (Just "tsahyt") (Just "user/tsahyt")))
-
-    describe "Server" $ do
-        it "example ':irc.znc.in PONG irc.znc.in tsahyt.com'" $ do
-            (msgPrefix =<<
-                (fetch ":irc.znc.in PONG irc.znc.in tsahyt.com" :: Maybe Pong))
-                `shouldBe` Just (PrefixServer "irc.znc.in")
-
-connReg :: Spec
-connReg = describe "Connection Registration" $ do
+clientMsgs :: Spec
+clientMsgs = describe "Client Messages" $ do
     describe "Pass" $ do
-        it "has format 'PASS <password>'" $ do
-            (build "hunter2" :: Pass) `shouldRoundtrip` "PASS hunter2\n"
-
+        it "takes one password argument" $ do
+            "PASS secretpasswordhere\n" `shouldFetch`
+                Just (build "secretpasswordhere" :: Pass)
+    
     describe "Nick" $ do
-        it "has format 'NICK <nickname>'" $ do
-            (build "tsahyt" :: Nick) `shouldRoundtrip` "NICK tsahyt\n"
+        it "takes one nickname argument" $ do
+            "NICK Wiz\n" `shouldFetch`
+                Just (build "Wiz" :: Nick)
+
+            ":WiZ NICK Kilroy\n" `shouldFetch`
+                Just (buildPrefix (PrefixUser (Host "WiZ" Nothing Nothing))
+                        "Kilroy" :: Nick)
+
+            ":dan-!d@localhost NICK Mamoped\n" `shouldFetch`
+                Just (buildPrefix 
+                        (PrefixUser (Host "dan-" (Just "d") (Just "localhost")))
+                        "Mamoped" :: Nick)
 
     describe "User" $ do
-        it "takes 4 arguments" $ do
-            fetch "USER a 0 *\n" `shouldBe` (Nothing :: Maybe User)
-            fetch "USER a 0\n" `shouldBe` (Nothing :: Maybe User)
-            fetch "USER a\n" `shouldBe` (Nothing :: Maybe User)
-
-        it "succeeds parsing 'USER guest 0 * :Real Name" $ do
-            fetch "USER guest 0 * :Real Name\n" `shouldBe`
-                (Just (build "guest" 0 Unused (Message "Real Name")) ::
-                    Maybe User)
+        it "has format 'USER <username> 0 * <realname>'" $ do
+            "USER guest 0 * :Ronnie Reagan\n" `shouldFetch`
+                Just (build "guest" 0 Unused "Ronnie Reagan" :: User)
 
     describe "Oper" $ do
         it "takes two arguments" $ do
-            fetch "OPER\n" `shouldBe` (Nothing :: Maybe Oper)
-
-    describe "Server" $ do
-        it "takes three arguments" $ do
-            fetch "SERVER irc.tsahyt.com 1" `shouldBe` (Nothing :: Maybe Server)
-            fetch "SERVER irc.tsahyt.com" `shouldBe` (Nothing :: Maybe Server)
-
-        it "succeeds parsing 'SERVER irc.tsahyt.com 1 :IRC Server'" $ do
-            fetch "SERVER irc.tsahyt.com 1 :IRC Server" `shouldBe`
-                (Just (build "irc.tsahyt.com" 1 (Message "IRC Server")) ::
-                    Maybe Server)
-
-chanOps :: Spec
-chanOps = describe "Channel Operations" $ do
-    describe "Join" $ do
-        it "take Channel arugments" $ do
-            fetch "JOIN #haskell\n" `shouldNotBe` (Nothing :: Maybe Join)
-
-        it "supports multiple arguments in a list" $ do
-            fetch "JOIN #haskell,#math\n" `shouldNotBe` (Nothing :: Maybe Join)
-
-        it "has format 'JOIN <channel>{,<channel>}'" $ do
-            (build [Channel "#haskell", Channel "#math"] :: Join)
-                `shouldRoundtrip` "JOIN #haskell,#math\n"
-
-    describe "Part" $ do
-        it "take Channel arugments" $ do
-            fetch "PART #haskell\n" `shouldNotBe` (Nothing :: Maybe Part)
-
-        it "supports multiple arguments in a list" $ do
-            fetch "PART #haskell,#math\n" `shouldNotBe` (Nothing :: Maybe Part)
-
-        it "has format 'PART <channel>{,<channel>} [<message>]'" $ do
-            (build [Channel "#haskell", Channel "#math"] 
-                   (Just (Message "bye")) :: Part)
-                `shouldRoundtrip` "PART #haskell,#math :bye\n"
-
-            (build [Channel "#haskell"] Nothing :: Part)
-                `shouldRoundtrip` "PART #haskell \n"
+            "OPER foo bar\n" `shouldFetch`
+                Just (build "foo" "bar" :: Oper)
 
     describe "Quit" $ do
-        it "has format 'QUIT <message>'" $ do
-            (build (Message "bye") :: Quit) `shouldRoundtrip` "QUIT :bye\n"
+        it "takes a message" $ do
+            "QUIT :Gone to have lunch\n" `shouldFetch`
+                Just (build "Gone to have lunch" :: Quit)
 
-    describe "SQuit" $ do
-        it "has format 'SQUIT <server> <message>'" $ do
-            (build "irc.tsahyt.com" (Message "bye") :: SQuit) 
-                `shouldRoundtrip` "SQUIT irc.tsahyt.com :bye\n"
+            ":dan-!d@localhost QUIT :Quit: Bye for now!\n" `shouldFetch`
+                Just (buildPrefix 
+                        (PrefixUser (Host "dan-" (Just "d") (Just "localhost")))
+                        "Quit: Bye for now!" :: Quit)
 
-    describe "UMode" $ do
-        it "has format 'MODE <nickname> *(('+'/'-')*(<mode char>))" $ do
-            (build "WiZ" [ModeFlags RemoveMode "w"] :: UMode) 
-                `shouldRoundtrip` "MODE WiZ -w\n"
-            (build "Angel" [ModeFlags AddMode "i"] :: UMode)
-                `shouldRoundtrip` "MODE Angel +i\n"
-            (build "WiZ" [ModeFlags RemoveMode "o"] :: UMode)
-                `shouldRoundtrip` "MODE WiZ -o\n"
+    describe "Join" $ do
+        it "has format 'JOIN <channel>{,<channel>} [<key>{,<key>}]'" $ do
+            "JOIN #foobar\n" `shouldFetch`
+                Just (build ["#foobar"] [] :: Join)
 
-    describe "CMode" $ do
-        it "has format 'MODE <channel> *(('+'/'-') <modes> <params>))" $ do
-            (build "#Finnish" [(ModeFlags AddMode "imI", "*!*@*.fi")] :: CMode)
-                `shouldRoundtrip` "MODE #Finnish +imI *!*@*.fi\n"
-            (build "#Finnish" [(ModeFlags AddMode "o", "Kilroy")] :: CMode)
-                `shouldRoundtrip` "MODE #Finnish +o Kilroy\n"
-            (build "&oulu" [(ModeFlags AddMode "b", "*!*@*.edu")
-                           ,(ModeFlags AddMode "e", "*!*@*.bu.edu")] :: CMode)
-                `shouldRoundtrip` "MODE &oulu +b *!*@*.edu +e *!*@*.bu.edu\n"
+            "JOIN &foo fubar\n" `shouldFetch`
+                Just (build ["&foo"] ["fubar"] :: Join)
 
-    describe "GetMode" $ do
-        it "has format 'MODE <channel> *<mode>'" $ do
-            (build "#meditation" "e" :: GetMode) `shouldRoundtrip`
-                "MODE #meditation e\n"
+            "JOIN #foo,&bar fubar\n" `shouldFetch`
+                Just (build ["#foo","&bar"] ["fubar"] :: Join)
 
-    describe "Names" $ do
-        it "has format 'NAMES [<channel>{,<channel>} [<target>]]'" $ do
-            (build [Channel "#haskell"] (Just "target") :: Names) 
-                `shouldRoundtrip` "NAMES #haskell target\n"
+            "JOIN #foo,#bar fubar,foobar\n" `shouldFetch`
+                Just (build ["#foo","#bar"] ["fubar","foobar"] :: Join)
 
-            (build [Channel "#haskell"] Nothing :: Names) 
-                `shouldRoundtrip` "NAMES #haskell \n"
+            "JOIN #foo,#bar\n" `shouldFetch`
+                Just (build ["#foo","#bar"] [] :: Join)
 
-            (build [] Nothing :: Names) 
-                `shouldRoundtrip` "NAMES  \n"
+            ":WiZ JOIN #Twilight_zone\n" `shouldFetch`
+                Just (buildPrefix (PrefixUser (Host "WiZ" Nothing Nothing))
+                      ["#Twilight_zone"] [] :: Join)
 
-    describe "List" $ do
-        it "has format 'LIST [<channel>{,<channel>} [<target>]]'" $ do
-            (build [Channel "#haskell"] (Just "target") :: List)
-                `shouldRoundtrip` "LIST #haskell target\n"
+            ":dan-!d@localhost JOIN #test\n" `shouldFetch`
+                Just (buildPrefix 
+                        (PrefixUser (Host "dan-" (Just "d") (Just "localhost")))
+                        ["#test"] [] :: Join)
 
-    describe "Invite" $ do
-        it "has format 'INVITE <nickname> <channel>'" $ do
-            (build "tsahyt" (Channel "#haskell") :: Invite)
-                `shouldRoundtrip` "INVITE tsahyt #haskell\n"
-
-    describe "Kick" $ do
-        it "has format 'KICK <channel>{,<channel>} <nick>{,<nick>}\
-          \ [<reason>];" $ do
-            (build [Channel "#haskell", Channel "#math"]
-                   ["tsahyt", "botnet"] (Just (Message "bye")) :: Kick)
-                `shouldRoundtrip` "KICK #haskell,#math tsahyt,botnet :bye\n"
+    describe "Part" $ do
+        it "has format 'PART <channel>{,<channel>} [<reason>]'" $ do
+            "PART #twilight_zone\n" `shouldFetch`
+                Just (build ["#twilight_zone"] Nothing :: Part)
 
     describe "Topic" $ do
-        it "has format 'TOPIC <channel> [<topic>]'" $ do
-            (build (Channel "#haskell") (Just $ Message "hello world") :: Topic)
-                `shouldRoundtrip` "TOPIC #haskell :hello world\n"
+        it "sets topic" $ do
+            "TOPIC #test :New topic\n" `shouldFetch`
+                Just (build "#test" (Just "New topic") :: Topic)
 
-            (build (Channel "#haskell") Nothing :: Topic)
-                `shouldRoundtrip` "TOPIC #haskell \n"
+        it "deletes topic" $ do
+            "TOPIC #test :\n" `shouldFetch`
+                Just (build "#test" (Just "") :: Topic)
 
-srvQueries :: Spec
-srvQueries = describe "Server Queries" $ do
+        it "queries topic" $ do
+            "TOPIC #test\n" `shouldFetch`
+                Just (build "#test" Nothing :: Topic)
+
+    describe "Names" $ do
+        it "takes channel arguments" $ do
+            "NAMES #twilight_zone,#42\n" `shouldFetch`
+                Just (build ["#twilight_zone", "#42"] :: Names)
+
+        it "takes 0 arguments" $ do
+            "NAMES\n" `shouldFetch`
+                Just (build [] :: Names)
+
+    describe "List" $ do
+        it "can take no argument" $ do
+            "LIST\n" `shouldFetch`
+                Just (build [] Nothing :: List)
+
+        it "can take channel arguments" $ do
+            "LIST #twilight_zone,#42\n" `shouldFetch`
+                Just (build ["#twilight_zone", "#42"] Nothing :: List)
+
+        it "can take query arguments" $ do
+            "LIST >3\n" `shouldFetch`
+                Just (build [] (Just ">3") :: List)
+
     describe "Version" $ do
         it "has format 'VERSION [<target>]'" $ do
-            (build (Just "irc.tsahyt.com") :: Version) `shouldRoundtrip`
-                "VERSION irc.tsahyt.com\n"
+            ":Wiz VERSION *.se\n" `shouldFetch`
+                Just (buildPrefix (PrefixUser (Host "Wiz" Nothing Nothing))
+                      (Just "*.se") :: Version)
 
-    describe "Motd" $ do
-        it "has format 'MOTD [<target>]'" $ do
-            (build (Just "irc.tsahyt.com") :: Motd) `shouldRoundtrip`
-                "MOTD irc.tsahyt.com\n"
+    describe "Connect" $ do
+        it "has format 'CONNECT <target> [<port> [<target>]]'" $ do
+            "CONNECT  eff.org 12765 csd.bu.edu\n" `shouldFetch`
+                Just (build "eff.org" (Just (12765, Just "csd.bu.edu")) 
+                       :: Connect)
 
-msgSending :: Spec
-msgSending = describe "Sending Messages" $ do
-    describe "PrivMsg" $ do
-        it "takes multiple destinations in a list" $ do
-            fetch "PRIVMSG #tsahyt,#math :hello world\n" `shouldNotBe` 
-                (Nothing :: Maybe PrivMsg)
+    describe "Stats" $ do
+        it "has format 'STATS <query> [<server>]'" $ do
+            "STATS m\n" `shouldFetch`
+                Just (build 'm' Nothing :: Stats)
 
-        it "has format 'PRIVMSG <receiver>{,receiver} :<text>'" $ do
-            (build [Channel "#tsahyt", Channel "#math"] 
-                   (Message "hello world") :: PrivMsg) `shouldRoundtrip` 
-                    "PRIVMSG #tsahyt,#math :hello world\n"
+    describe "Mode" $ do
+        it "has format 'MODE <target> [<modestring> [<mode arguments>..]]'" $ do
+            "MODE dan +i\n" `shouldFetch`
+                Just (build (Right "dan") (Just ("+i", [])) :: Mode)
 
-    describe "Notice" $ do
-        it "takes multiple destinations in a list" $ do
-            fetch "NOTICE #tsahyt,#math :hello world\n" `shouldNotBe` 
-                (Nothing :: Maybe Notice)
+            "MODE #foobar +mb *@127.0.0.1\n" `shouldFetch`
+                Just (build (Left "#foobar") (Just ("+mb", ["*@127.0.0.1"]))
+                         :: Mode)
 
-        it "has format 'NOTICE <receiver>{,receiver} :<text>'" $ do
-            (build [Channel "#tsahyt", Channel "#math"] 
-                   (Message "hello world") :: Notice) `shouldRoundtrip` 
-                    "NOTICE #tsahyt,#math :hello world\n"
+            "MODE #foobar -bl+i *@192.168.0.1\n" `shouldFetch`
+                Just (build (Left "#foobar") (Just ("-bl+i", ["*@192.168.0.1"]))
+                         :: Mode)
 
-usrQueries :: Spec
-usrQueries = describe "User-based Queries" $ do
-    describe "Who" $ do
-        it "has format 'WHO [<mask>] [o]'" $ do
-            (build (Just "*.fi") Unset :: Who) `shouldRoundtrip`
-                "WHO *.fi \n"
-            (build (Just "*.fi") Set :: Who) `shouldRoundtrip`
-                "WHO *.fi o\n"
+            ":irc.example.com MODE #foobar +o bunny\n" `shouldFetch`
+                Just (buildPrefix (PrefixServer "irc.example.com")
+                          (Left "#foobar") (Just ("+o", ["bunny"])) :: Mode)
 
-    describe "WhoIs" $ do
-        it "has format 'WHOIS [<target>] <mask>{,<mask>}'" $ do
-            (build (Just "eff.org") ["trillian"] :: WhoIs) `shouldRoundtrip`
-                "WHOIS eff.org trillian\n"
+    describe "Userhost" $ do
+        it "takes space separated nicknames" $ do
+            "USERHOST Wiz Michael Marty p\n" `shouldFetch`
+                Just (build "Wiz" (Just "Michael") (Just "Marty") (Just "p")
+                            Nothing :: Userhost)
 
-    describe "WhoWas" $ do
-        it "has format 'WHOWAS <nick>{,<nick>} [<count> [<target>]]" $ do
-            (build ["Wiz"] Nothing :: WhoWas) `shouldRoundtrip` "WHOWAS Wiz \n"
-            (build ["Mermaid"] (Just (9, Nothing)) :: WhoWas) 
-                `shouldRoundtrip` "WHOWAS Mermaid 9 \n"
-            (build ["Trillian"] (Just (1, Just "*.edu")) :: WhoWas) 
-                `shouldRoundtrip` "WHOWAS Trillian 1 *.edu\n"
-
-miscMsgs :: Spec
-miscMsgs = describe "Miscellaneous" $ do
-    describe "Ping" $ do
-        it "has format 'PING <server> [<server>]'" $ do
-            (build "irc.tsahyt.com" Nothing :: Ping) `shouldRoundtrip`
-                "PING irc.tsahyt.com \n"
-            (build "irc.tsahyt.com" (Just "foo") :: Ping) `shouldRoundtrip`
-                "PING irc.tsahyt.com foo\n"
-
-    describe "Pong" $ do
-        it "has format 'PONG <server> [<server>]'" $ do
-            (build "irc.tsahyt.com" Nothing :: Pong) `shouldRoundtrip`
-                "PONG irc.tsahyt.com \n"
-            (build "irc.tsahyt.com" (Just "foo") :: Pong) `shouldRoundtrip`
-                "PONG irc.tsahyt.com foo\n"
-
-    describe "Error" $ do
-        it "has format 'ERROR <message>'" $ do
-            (build (Message "fubar") :: Error) `shouldRoundtrip`
-                "ERROR :fubar\n"
-
-shouldRoundtrip 
-    :: (Parameter (PList p), Show (PList p), Eq (PList p), KnownSymbol c) 
-    => Msg c p -> ByteString 
-    -> Expectation
-shouldRoundtrip x y = do
-    emit x `shouldBe` y
-    fetch y `shouldBe` Just x
+shouldFetch 
+    :: forall c p.
+       (HasCallStack, Show (Msg c p), Eq (PList p), KnownSymbol c
+       ,Parameter (PList p)) 
+    => ByteString -> Maybe (Msg c p) -> Expectation
+shouldFetch x y = fetch x `shouldBe` y

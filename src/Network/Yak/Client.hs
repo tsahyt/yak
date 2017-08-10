@@ -84,20 +84,20 @@ type Quit = Msg "QUIT" '[Message]
 
 -- Channel Operations
 -- | > JOIN <channel>{,<channel>} [<key>{,<key>}]
-type Join = Msg "JOIN" '[NonEmpty Channel, NonEmpty Text]
+type Join = Msg "JOIN" '[NonEmpty Channel, [Text]]
 type Join0 = Msg "JOIN" '[Unused "0"]
 
 -- | > PART <channel>{,<channel>} [<reason>]
-type Part = Msg "PART" '[NonEmpty Channel, Message]
+type Part = Msg "PART" '[NonEmpty Channel, Maybe Message]
 
 -- | > TOPIC <channel> [<topic>]
-type Topic = Msg "TOPIC" '[Channel, Message]
+type Topic = Msg "TOPIC" '[Channel, Maybe Message]
 
 -- | > NAMES [<channel>{,<channel>}]
-type Names = Msg "NAMES" '[NonEmpty Channel]
+type Names = Msg "NAMES" '[[Channel]]
 
 -- | > LIST [<channel>{,<channel>}] [<elistcond>{,<elistcond>}]
-type List = Msg "LIST" '[NonEmpty Channel, Maybe Text]
+type List = Msg "LIST" '[[Channel], Maybe Text]
 
 
 -- Server Queries and Commands
@@ -105,26 +105,26 @@ type List = Msg "LIST" '[NonEmpty Channel, Maybe Text]
 type Motd = Msg "MOTD" '[Hostname]
 
 -- | > VERSION [<target>]
-type Version = Msg "VERSION" '[Hostname]
+type Version = Msg "VERSION" '[Maybe Hostname]
 
 -- | > ADMIN [<target>]
-type Admin = Msg "ADMIN" '[Hostname]
+type Admin = Msg "ADMIN" '[Maybe Hostname]
 
 -- | > CONNECT <target server> [<port> [<remote server>]]
 type Connect = Msg "CONNECT" '[Hostname, Maybe (Int, Maybe Hostname)]
 
 -- | > TIME [<server>]
-type Time = Msg "TIME" '[Hostname]
+type Time = Msg "TIME" '[Maybe Hostname]
 
 -- | > STATS <query> [<server>]
 type Stats = Msg "STATS" '[Char, Maybe Hostname]
 
 -- | > INFO [<target>]
-type Info = Msg "INFO" '[Hostname]
+type Info = Msg "INFO" '[Maybe Hostname]
 
 -- | > MODE <target> [<modestring> [<mode arguments>...]]
 type Mode = Msg "MODE" 
-    '[Either Nickname Channel, Maybe (ModeString, SList Text)]
+    '[Either Channel Nickname, Maybe (ModeString, SList Text)]
 
 -- Sending Messages
 -- | > PRIVMSG <target>{,<target>} <text to be sent>
