@@ -368,16 +368,17 @@ instance Parameter ModeSign where
     seize = (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
 
 newtype ModeString = 
-    ModeString { getModeString :: NonEmpty (ModeSign, [Char]) }
+    ModeString { getModeString :: NonEmpty (ModeSign, NonEmpty Char) }
     deriving (Eq, Show, Ord, Read)
 
 makeWrapped ''ModeString
 
 instance Parameter ModeString where
     render = B.pack . concat . toList . fmap go . getModeString
-        where go (x,xs) = modeSignChar x : xs
+        where go (x,xs) = modeSignChar x : toList xs
     seize  = ModeString . fromList <$> many1 block
-        where block = (,) <$> seize <*> many1 (satisfy isAlpha_ascii)
+        where block = (,) <$> seize 
+                          <*> (fromList <$> many1 (satisfy isAlpha_ascii))
 
 instance IsString ModeString where
     fromString = either (error "Invalid ModeString Literal") id 
