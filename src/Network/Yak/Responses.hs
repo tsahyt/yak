@@ -38,9 +38,11 @@ makeMsgLenses ''RplYourhost ["client", "message"]
 type RplCreated = Msg "003" '[Client, Message]
 makeMsgLenses ''RplCreated ["client", "message"]
 
--- | > "<client> <servername> <version> <available user modes> <available channel modes> [<channel modes with a parameter>]"
+-- | > "<client> <servername> <version> <available user modes> 
+--   > <available channel modes> [<channel modes with a parameter>]"
 type RplMyinfo = Msg "004" '[Client, Hostname, Text, Modes, Modes, Maybe Modes]
-makeMsgLenses ''RplMyinfo ["client", "server", "version", "umodes", "cmodes", "cmodesParam"]
+makeMsgLenses ''RplMyinfo ["client", "server", "version", "umodes", "cmodes"
+                          ,"cmodesParam"]
 
 -- | > "<client> <1-13 tokens> :are supported by this server"
 type RplIsupport = Msg "005" '[Client, SList Token, Message]
@@ -134,8 +136,10 @@ type RplNowaway = Msg "306" '[Client, Message]
 makeMsgLenses ''RplNowaway ["client", "message"]
 
 -- | > "<client> <nick> <username> <host> * :<realname>"
-type RplWhoisuser = Msg "311" '[Client, Nickname, Username, Hostname, Unused "*", Message]
-makeMsgLenses ''RplWhoisuser ["client", "nick", "username", "host", "unused", "message"]
+type RplWhoisuser = Msg "311" '[Client, Nickname, Username, Hostname
+                               ,Unused "*", Message]
+makeMsgLenses ''RplWhoisuser ["client", "nick", "username", "host"
+                             ,"unused", "message"]
 
 -- | > "<client> <nick> <server> :<server info>"
 type RplWhoisserver = Msg "312" '[Client, Nickname, Hostname, Message]
@@ -146,8 +150,10 @@ type RplWhoisoperator = Msg "313" '[Client, Nickname, Message]
 makeMsgLenses ''RplWhoisoperator ["client", "nick", "message"]
 
 -- | > "<client> <nick> <username> <host> * :<realname>"
-type RplWhowasuser = Msg "314" '[Client, Nickname, Username, Hostname, Unused "*", Message]
-makeMsgLenses ''RplWhowasuser ["client", "nick", "username", "host", "unused", "message"]
+type RplWhowasuser = Msg "314" '[Client, Nickname, Username, Hostname
+                                ,Unused "*", Message]
+makeMsgLenses ''RplWhowasuser ["client", "nick", "username", "host"
+                              ,"unused", "message"]
 
 -- | > "<client> <nick> <secs> [<signon>] :seconds idle, signon time"
 type RplWhoisidle = Msg "317" '[Client, Nickname, Int, Maybe POSIXTime, Message]
@@ -369,7 +375,8 @@ makeMsgLenses ''ErrStarttls ["client", "message"]
 type ErrNoprivs = Msg "723" '[Client, Text, Message]
 makeMsgLenses ''ErrNoprivs ["client", "priv", "message"]
 
--- | > "<client> <nick>!<user>@<host> <account> :You are now logged in as <username>"
+-- | > "<client> <nick>!<user>@<host> <account> 
+--   > :You are now logged in as <username>"
 type RplLoggedin = Msg "900" '[Client, Host, Text, Message]
 makeMsgLenses ''RplLoggedin ["client", "host", "account", "message"]
 
