@@ -5,7 +5,14 @@
 module Network.Yak.Client
 (
     -- * Connection Messages
-    Cap,
+    -- | > CAP <subcommand> [:<capabilities>]
+    CapLs,
+    CapList,
+    CapReq,
+    CapAck,
+    CapNak,
+    CapEnd,
+
     Authenticate,
     Pass,
     Nick,
@@ -48,11 +55,13 @@ import Data.List.NonEmpty (NonEmpty)
 import Network.Yak.Types
 import Data.Word (Word)
 
-type TODO = ()
-
 -- Connection Messages
--- | > CAP <subcommand> [:<capabilities>]
-type Cap = Msg "CAP" '[Text, Message]
+type CapLs   = Msg "CAP LS" '[]
+type CapList = Msg "CAP LIST" '[]
+type CapReq  = Msg "CAP REQ" '[Message]
+type CapAck  = Msg "CAP ACK" '[]
+type CapNak  = Msg "CAP NAK" '[]
+type CapEnd  = Msg "CAP END" '[]
 
 -- | > AUTHENTICATE
 type Authenticate = Msg "AUTHENTICATE" '[]
@@ -93,28 +102,29 @@ type List = Msg "LIST" '[NonEmpty Channel, Maybe Text]
 
 -- Server Queries and Commands
 -- | > MOTD [<target>]
-type Motd = Msg "MOTD" '[Target]
+type Motd = Msg "MOTD" '[Hostname]
 
 -- | > VERSION [<target>]
-type Version = Msg "VERSION" '[Target]
+type Version = Msg "VERSION" '[Hostname]
 
 -- | > ADMIN [<target>]
-type Admin = Msg "ADMIN" '[Target]
+type Admin = Msg "ADMIN" '[Hostname]
 
 -- | > CONNECT <target server> [<port> [<remote server>]]
-type Connect = Msg "CONNECT" '[Target, Maybe (Int, Maybe Target)]
+type Connect = Msg "CONNECT" '[Hostname, Maybe (Int, Maybe Hostname)]
 
 -- | > TIME [<server>]
-type Time = Msg "TIME" '[Target]
+type Time = Msg "TIME" '[Hostname]
 
 -- | > STATS <query> [<server>]
-type Stats = Msg "STATS" '[TODO, Maybe Target]
+type Stats = Msg "STATS" '[Char, Maybe Hostname]
 
 -- | > INFO [<target>]
-type Info = Msg "INFO" '[Target]
+type Info = Msg "INFO" '[Hostname]
 
 -- | > MODE <target> [<modestring> [<mode arguments>...]]
-type Mode = Msg "MODE" '[Target, TODO]
+type Mode = Msg "MODE" 
+    '[Either Nickname Channel, Maybe (ModeString, Maybe Text)]
 
 -- Sending Messages
 -- | > PRIVMSG <target>{,<target>} <text to be sent>

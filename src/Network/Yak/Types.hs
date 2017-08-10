@@ -41,10 +41,11 @@ module Network.Yak.Types
     Message(..),
     Nickname,
     Username,
+    Hostname,
     Mask,
-    Target,
     ModeSign(..),
-    ModeFlags(..)
+    ModeString,
+    ModeString'(..),
 )
 where
 
@@ -73,10 +74,15 @@ data Prefix
     | PrefixUser Host
     deriving (Eq, Show, Read, Ord)
 
+type Username = Text
+type Nickname = Text
+type Mask = Text
+type Hostname = Text
+
 data Host = Host
-    { hostNick :: Text
-    , hostUser :: Maybe Text
-    , hostHost :: Maybe Text
+    { hostNick :: Nickname
+    , hostUser :: Maybe Username
+    , hostHost :: Maybe Hostname
     }
     deriving (Eq, Show, Read, Ord)
 
@@ -332,7 +338,7 @@ makeWrapped ''Channel
 instance Parameter Channel where
     render = render . getChannel
     seize  = do
-        mark <- satisfy (inClass "&#+!")
+        mark <- satisfy (inClass "&#")
         name <- many1 $ satisfy (notInClass " \7,\n")
         pure . Channel . T.pack $ mark : name
 
@@ -345,11 +351,6 @@ instance Parameter Message where
     render = render . T.cons ':' . getMessage
     seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
 
-type Username = Text
-type Nickname = Text
-type Mask = Text
-type Target = Text
-
 data ModeSign = AddMode | RemoveMode
     deriving (Eq, Show, Ord, Read)
 
@@ -361,9 +362,61 @@ instance Parameter ModeSign where
     render = B.singleton . modeSignChar
     seize = (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
 
-data ModeFlags = ModeFlags ModeSign [Char]
-    deriving (Eq, Show, Ord, Read)
+-- | Datatype for precisely representing valid mode strings, i.e. strings
+-- starting with @+@ or @-@, continuing with some characters where all @+@/@-@
+-- have special position.
+type ModeString = ModeString' ModeSign
 
-instance Parameter ModeFlags where
-    render (ModeFlags s ss) = B.pack $ modeSignChar s : ss
-    seize = ModeFlags <$> seize <*> many1 (satisfy isAlpha_ascii)
+-- | Workhorse for 'ModeString'. The type parameter determines the type in the
+-- head and can be on of 'ModeSign' or 'Char', as there are no other valid
+-- constructors.
+data ModeString' head where
+    MSNil  :: ModeString' Char
+    MSSign :: ModeSign -> ModeString' Char -> ModeString' ModeSign
+    MSChar :: Char -> ModeString' j -> ModeString' Char
+
+instance Show (ModeString' head) where
+    show MSNil = ""
+    show (MSSign x xs) = modeSignChar x : show xs
+    show (MSChar x xs) = x : show xs
+
+instance Eq (ModeString' head) where
+    a == b = show a == show b
+
+instance Parameter (ModeString' ModeSign) where
+    render = B.pack . show
+    seize  = do
+        SomeModeString x <- parseSomeModeString
+        case x of
+            MSSign _ _ -> pure x
+            _ -> empty
+
+-- | Partial for malformed literals!
+instance IsString (ModeString' ModeSign) where
+    fromString = either (error "Invalid ModeString Literal") id 
+               . parseOnly seize . B.pack
+
+data SomeModeString where
+    SomeModeString :: forall head. ModeString' head -> SomeModeString
+
+instance Show SomeModeString where
+    show (SomeModeString x) = show x
+
+parseSomeModeString :: Parser SomeModeString
+parseSomeModeString = 
+    choice [ SomeModeString <$> msign
+           , SomeModeString <$> mchar 
+           , pure $ SomeModeString MSNil ]
+    where msign :: Parser (ModeString' ModeSign)
+          msign = do
+              s <- (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
+              x <- parseSomeModeString
+              case x of
+                  SomeModeString c@(MSChar{}) -> pure $ MSSign s c
+                  _ -> empty
+
+          mchar :: Parser (ModeString' Char)
+          mchar = do
+              c <- anyChar
+              SomeModeString x <- parseSomeModeString
+              pure $ MSChar c x
