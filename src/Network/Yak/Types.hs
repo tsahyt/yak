@@ -31,6 +31,7 @@ module Network.Yak.Types
     Unused(..),
     Flag(..),
     SList(..),
+    CList(..),
     Parameter(..),
     PList(..),
     phead,
@@ -46,6 +47,13 @@ module Network.Yak.Types
     ModeSign(..),
     ModeString(..),
     Modes(..),
+    Token(..),
+    UReply(..),
+    ureplyNick,
+    ureplyIsOp,
+    ureplyIsAway,
+    ureplyHostname,
+    Member(..)
 )
 where
 
@@ -241,6 +249,27 @@ instance Parameter a => Parameter (SList a) where
     render = mconcat . intersperse " " . map render . getSList
     seize  = SList <$> sepBy seize space
 
+-- | Space separated lists after colon. Used in some numeric replies
+newtype CList a = CList { getCList :: [a] }
+    deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
+              Traversable, Monoid, Alternative)
+
+instance Wrapped (CList a) where
+    type Unwrapped (CList a) = [a]
+    _Wrapped' = iso getCList CList
+
+instance (t ~ CList b) => Rewrapped (CList a) t
+
+-- | Syntactic sugar for construction
+instance IsList (CList a) where
+    type Item (CList a) = a
+    fromList = CList
+    toList = getCList
+
+instance Parameter a => Parameter (CList a) where
+    render = mconcat . (":" :) . intersperse " " . map render . getCList
+    seize  = CList <$> (char ':' *> sepBy seize space)
+
 -- | Heterogeneous list of parameters.
 data PList a where
     PNil  :: PList '[]
@@ -416,3 +445,52 @@ makeWrapped ''Modes
 instance Parameter Modes where
     render = B.pack . getModes
     seize  = Modes <$> many1 (satisfy isAlpha_ascii)
+
+data Token
+    = KeyValue Text Text
+    | PositiveToken Text
+    | NegativeToken Text
+    deriving (Eq, Show, Ord, Read)
+
+makePrisms ''Token
+
+instance Parameter Token where
+    render (PositiveToken t) = render . T.toUpper $ t
+    render (NegativeToken t) = render . T.cons '-' . T.toUpper $ t
+    render (KeyValue t v) = render (T.toUpper t <> "=" <> v)
+
+    seize = kv <|> neg <|> pos
+        where ident = T.pack <$> many1 (satisfy (inClass "A-Z"))
+              kv = KeyValue <$> ident 
+                            <*> (char '=' *> (decodeUtf8 <$> takeTill isSpace))
+              neg = NegativeToken <$> (char '-' *> ident)
+              pos = PositiveToken <$> ident
+
+-- | Replies to 'Userhost' queries.
+declareLenses [d|
+    data UReply = UReply
+        { ureplyNick     :: Nickname
+        , ureplyIsOp     :: Bool
+        , ureplyIsAway   :: Bool
+        , ureplyHostname :: Hostname
+        }
+        deriving (Eq, Show, Ord, Read)
+    |]
+
+instance Parameter UReply where
+    render (UReply nick isop isaway host) = 
+        render $ nick <> if isop then "*" else "" <> "=" 
+              <> if isaway then "-" else "+" <> host
+
+    seize = UReply 
+        <$> seize 
+        <*> option False (True <$ char '*')
+        <*> (char '=' *> ((True <$ char '-') <|> (False <$ char '+')))
+        <*> seize
+
+data Member a = Member (Maybe Char) a
+    deriving (Eq, Show, Ord, Read)
+
+instance Parameter a => Parameter (Member a) where
+    render (Member p c) = maybe "" B.singleton p <> (render c)
+    seize = Member <$> optional (satisfy (inClass "~&@%+")) <*> seize

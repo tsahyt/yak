@@ -24,7 +24,6 @@ import Data.Time.Clock.POSIX
 import Network.Yak.Types
 import Network.Yak.TH
 
-type TODO = Text
 type Client = Username
 
 -- | > "<client> :Welcome to the <networkname> Network, <nick>[!<user>@<host>]"
@@ -44,8 +43,8 @@ type RplMyinfo = Msg "004" '[Client, Hostname, Text, Modes, Modes, Maybe Modes]
 makeMsgLenses ''RplMyinfo ["client", "server", "version", "umodes", "cmodes", "cmodesParam"]
 
 -- | > "<client> <1-13 tokens> :are supported by this server"
-type RplIsupport = Msg "005" '[Client, TODO]
-makeMsgLenses ''RplIsupport ["client", "tokens"]
+type RplIsupport = Msg "005" '[Client, SList Token, Message]
+makeMsgLenses ''RplIsupport ["client", "tokens", "message"]
 
 -- | > "<client> <hostname> <port> :<info>"
 type RplBounce = Msg "010" '[Client, Hostname, Int, Message]
@@ -119,11 +118,11 @@ type RplAway = Msg "301" '[Client, Nickname, Message]
 makeMsgLenses ''RplAway ["client", "nick", "message"]
 
 -- | > "<client> :[<reply>{ <reply>}]"
-type RplUserhost = Msg "302" '[Client, TODO]
+type RplUserhost = Msg "302" '[Client, CList UReply]
 makeMsgLenses ''RplUserhost ["client", "replies"]
 
 -- | > "<client> :[<nickname>{ <nickname>}]"
-type RplIson = Msg "303" '[Client, TODO]
+type RplIson = Msg "303" '[Client, CList Nickname]
 makeMsgLenses ''RplIson ["client", "nicks"]
 
 -- | > "<client> :You are no longer marked as being away"
@@ -159,8 +158,8 @@ type RplEndofwhois = Msg "318" '[Client, Nickname, Message]
 makeMsgLenses ''RplEndofwhois ["client", "nick", "message"]
 
 -- | > "<client> <nick> :[prefix]<channel>{ [prefix]<channel>}"
-type RplWhoischannels = Msg "319" '[Client, Nickname, TODO]
-makeMsgLenses ''RplWhoischannels ["client", "nick", "todo"]
+type RplWhoischannels = Msg "319" '[Client, Nickname, CList (Member Channel)]
+makeMsgLenses ''RplWhoischannels ["client", "nick", "channels"]
 
 -- | > "<client> Channel :Users  Name"
 type RplListstart = Msg "321" '[Client]
@@ -215,8 +214,8 @@ type RplVersion = Msg "351" '[Client, Text, Hostname, Message]
 makeMsgLenses ''RplVersion ["client", "version", "server", "message"]
 
 -- | > "<client> <symbol> <channel> :[prefix]<nick>{ [prefix]<nick>}"
-type RplNamreply = Msg "353" '[Client, Char, Channel, TODO]
-makeMsgLenses ''RplNamreply ["client", "symbol", "channel", "todo"]
+type RplNamreply = Msg "353" '[Client, Char, Channel, CList (Member Nickname)]
+makeMsgLenses ''RplNamreply ["client", "symbol", "channel", "nicks"]
 
 -- | > "<client> <channel> :End of /Names list"
 type RplEndofnames = Msg "366" '[Client, Channel, Message]
@@ -251,8 +250,8 @@ type RplYoureoper = Msg "381" '[Client, Message]
 makeMsgLenses ''RplYoureoper ["client", "message"]
 
 -- | > "<client> <config file> :Rehashing"
-type RplRehashing = Msg "382" '[Client, TODO, Message]
-makeMsgLenses ''RplRehashing ["client", "todo", "message"]
+type RplRehashing = Msg "382" '[Client, Text, Message]
+makeMsgLenses ''RplRehashing ["client", "configFile", "message"]
 
 -- | > "<client> <command>{ <subcommand>} :<info>"
 type ErrUnknownerror = Msg "400" '[Client, SList Text, Message]
