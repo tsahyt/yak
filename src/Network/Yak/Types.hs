@@ -369,9 +369,9 @@ type ModeString = ModeString' ModeSign
 
 -- | Workhorse for 'ModeString'. The type parameter determines the type in the
 -- head and can be on of 'ModeSign' or 'Char', as there are no other valid
--- constructors.
+-- constructors for non-empty mode strings.
 data ModeString' head where
-    MSNil  :: ModeString' Char
+    MSNil  :: ModeString' empty
     MSSign :: ModeSign -> ModeString' Char -> ModeString' ModeSign
     MSChar :: Char -> ModeString' j -> ModeString' Char
 
