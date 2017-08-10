@@ -440,6 +440,6 @@ parseSomeModeString =
 
           mchar :: Parser (ModeString' Char)
           mchar = do
-              c <- anyChar
+              c <- satisfy isAlpha_ascii
               SomeModeString x <- parseSomeModeString
               pure $ MSChar c x

@@ -124,7 +124,7 @@ type Info = Msg "INFO" '[Hostname]
 
 -- | > MODE <target> [<modestring> [<mode arguments>...]]
 type Mode = Msg "MODE" 
-    '[Either Nickname Channel, Maybe (ModeString, Maybe Text)]
+    '[Either Nickname Channel, Maybe (ModeString, SList Text)]
 
 -- Sending Messages
 -- | > PRIVMSG <target>{,<target>} <text to be sent>
