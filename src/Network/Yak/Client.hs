@@ -64,7 +64,7 @@ type CapNak  = Msg "CAP NAK" '[]
 type CapEnd  = Msg "CAP END" '[]
 
 -- | > AUTHENTICATE
-type Authenticate = Msg "AUTHENTICATE" '[]
+type Authenticate = Msg "AUTHENTICATE" '[Text]
 
 -- | > PASS <password>
 type Pass = Msg "PASS" '[Text]

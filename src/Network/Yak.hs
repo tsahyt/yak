@@ -27,7 +27,6 @@ import GHC.TypeLits
 import Network.Yak.Types
 
 import qualified Data.ByteString.Char8 as B
-import qualified Data.Text as T
 
 -- | Encode an IRC message to a 'ByteString', ready for the network
 emit :: forall c p. (Parameter (PList p), KnownSymbol c) 
@@ -40,10 +39,7 @@ emit Msg{..} = fromMaybe ""
             <> "\n"
 
     where rpfx (PrefixServer x) = render x
-          rpfx (PrefixUser h) = render $
-              hostNick h 
-           <> maybe "" (T.cons '!') (hostUser h) 
-           <> maybe "" (T.cons '@') (hostHost h)
+          rpfx (PrefixUser h) = render h
 
 -- | Encode existentially quantified message.
 emitSome :: SomeMsg -> ByteString
@@ -65,11 +61,5 @@ fetch' = Msg
      <$> optional (char ':' *> pfx) 
      <*> (skipSpace *> cmd *> skipSpace *> seize)
     where cmd = string . B.pack . symbolVal $ Proxy @c
-          pfx = (PrefixUser <$> hst) <|> (PrefixServer <$> srv)
-
-          hst = Host
-            <$> (decodeUtf8 <$> takeTill (inClass "!@ "))
-            <*> optional (decodeUtf8 <$> (char '!' *> takeTill (inClass "@ ")))
-            <*> optional (decodeUtf8 <$> (char '@' *> takeTill isSpace))
-
+          pfx = (PrefixUser <$> seize) <|> (PrefixServer <$> srv)
           srv = decodeUtf8 <$> takeTill isSpace

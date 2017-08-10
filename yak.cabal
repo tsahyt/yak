@@ -26,7 +26,8 @@ library
                        bytestring,
                        lens,
                        attoparsec,
-                       template-haskell
+                       template-haskell,
+                       time
   ghc-options:         -Wall -Werror
   default-language:    Haskell2010
 

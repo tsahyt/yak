@@ -45,6 +45,7 @@ module Network.Yak.Types
     Mask,
     ModeSign(..),
     ModeString(..),
+    Modes(..),
 )
 where
 
@@ -56,9 +57,11 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.Monoid
+import Data.Void
 import Data.Maybe (fromMaybe)
 import Data.Word (Word)
 import Data.Proxy
+import Data.Time.Clock.POSIX
 import Data.Kind (Type)
 import Data.Text.Encoding
 import Data.String
@@ -184,6 +187,16 @@ instance Parameter Char where
     render = render . T.singleton
     seize = satisfy (not . isSpace)
 
+instance Parameter Host where
+    render h = render
+             $ hostNick h 
+            <> maybe "" (T.cons '!') (hostUser h) 
+            <> maybe "" (T.cons '@') (hostHost h)
+    seize = Host
+         <$> (decodeUtf8 <$> takeTill (inClass "!@ "))
+         <*> optional (decodeUtf8 <$> (char '!' *> takeTill (inClass "@ ")))
+         <*> optional (decodeUtf8 <$> (char '@' *> takeTill isSpace))
+
 instance (Parameter a, Parameter b) => Parameter (a, b) where
     render (a,b) = render a <> " " <> render b
     seize = (,) <$> seize <*> (skipSpace *> seize)
@@ -193,6 +206,18 @@ instance (Parameter a, Parameter b) => Parameter (Either a b) where
     render (Right x) = render x
 
     seize = (Left <$> seize) <|> (Right <$> seize)
+
+-- | For illegal parameters
+instance TypeError ('Text "Illegal IRC Parameter") => Parameter Void where
+    render = absurd
+    seize  = empty
+
+instance Parameter POSIXTime where
+    render x = let x' = truncate x :: Int
+                in B.pack . show $ x'
+    seize  = do
+        (x :: Int) <- decimal
+        pure $ fromIntegral x
 
 -- | Space separated lists. Use with caution, since spaces are also the
 -- separator for 'PList'!
@@ -383,3 +408,11 @@ instance Parameter ModeString where
 instance IsString ModeString where
     fromString = either (error "Invalid ModeString Literal") id 
                . parseOnly seize . B.pack
+
+newtype Modes = Modes { getModes :: [Char] }
+
+makeWrapped ''Modes
+
+instance Parameter Modes where
+    render = B.pack . getModes
+    seize  = Modes <$> many1 (satisfy isAlpha_ascii)
