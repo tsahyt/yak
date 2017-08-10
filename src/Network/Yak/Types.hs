@@ -45,6 +45,7 @@ module Network.Yak.Types
     Mask,
     ModeSign(..),
     ModeString,
+    modes,
     ModeString'(..),
 )
 where
@@ -395,6 +396,28 @@ instance Parameter (ModeString' ModeSign) where
 instance IsString (ModeString' ModeSign) where
     fromString = either (error "Invalid ModeString Literal") id 
                . parseOnly seize . B.pack
+
+-- | Parse a 'ModeString' into a list of mode characters with their changes.
+modes :: ModeString -> [(ModeSign, [Char])]
+modes ms = 
+    let ms' = SomeModeString ms 
+     in reverse $ zip (signs [] ms') (map reverse $ chars [] ms')
+
+    where chars :: [[Char]] -> SomeModeString -> [[Char]]
+          chars acc (SomeModeString MSNil) = acc
+          chars acc (SomeModeString (MSSign _ xs)) = 
+              chars ([] : acc) (SomeModeString xs)
+          chars acc (SomeModeString (MSChar x xs)) =
+              case acc of
+                  (a:as) -> chars ((x : a) : as) (SomeModeString xs)
+                  [] -> chars [[x]] (SomeModeString xs)
+
+          signs :: [ModeSign] -> SomeModeString -> [ModeSign]
+          signs acc (SomeModeString MSNil) = acc
+          signs acc (SomeModeString (MSSign x xs)) =
+              signs (x : acc) (SomeModeString xs)
+          signs acc (SomeModeString (MSChar _ xs)) =
+              signs acc (SomeModeString xs)
 
 data SomeModeString where
     SomeModeString :: forall head. ModeString' head -> SomeModeString
