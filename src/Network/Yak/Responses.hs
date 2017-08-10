@@ -7,7 +7,7 @@
 -- If you disagree with these choices, pull requests are welcome.
 --
 -- Also note that you probably want to import this module qualified, or import
--- just what you need, as it exports 135 type synonyms.
+-- just what you need, as it exports 93 type synonyms and many more lenses.
 --
 -- In case your use case allows more precise parsing, or you need server
 -- specific response codes not listed, you can always hide the relevant types
