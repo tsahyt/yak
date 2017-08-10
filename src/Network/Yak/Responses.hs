@@ -232,7 +232,7 @@ makeMsgLenses ''RplEndofbanlist ["client", "channel", "message"]
 
 -- | > "<client> <nick> :End of Whowas"
 type RplEndofwhowas = Msg "369" '[Client, Nickname, Message]
-makeMsgLenses ''RplEndofwhowas ["client", "ncik", "message"]
+makeMsgLenses ''RplEndofwhowas ["client", "nick", "message"]
 
 -- | > "<client> :- <server> Message of the day - "
 type RplMotdstart = Msg "375" '[Client, Unused ":-", Hostname]
