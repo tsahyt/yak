@@ -5,6 +5,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 module Network.Yak.Capabilities
 (
     Identifier,
@@ -33,7 +34,6 @@ module Network.Yak.Capabilities
     capLs302,
     SrvCapLs,
     srvCapLsIdentifier,
-    srvCapLsUnused,
     srvCapLsMultiLine,
     srvCapLsCapabilities,
     
@@ -41,7 +41,6 @@ module Network.Yak.Capabilities
     CapList,
     SrvCapList,
     srvCapListIdentifier,
-    srvCapListUnused,
     srvCapListMultiLine,
     srvCapListCapabilities,
 
@@ -59,16 +58,14 @@ module Network.Yak.Capabilities
     -- ** NEW/DEL
     SrvCapNew,
     srvCapNewIdentifier,
-    srvCapNewSubcommand,
     srvCapNewCapabilities,
     SrvCapDel,
     srvCapDelIdentifier,
-    srvCapDelSubcommand,
     srvCapDelCapabilities,
 )
 where
 
-import Control.Lens.TH
+import Control.Lens
 import Control.Applicative
 import Data.Attoparsec.ByteString.Char8 (string, choice, char)
 import Data.Text (Text)
@@ -137,7 +134,10 @@ makeMsgLenses ''CapLs ["302"]
 -- | All but the last line in multi-line responses must have the * enabled.
 type SrvCapLs = Msg "CAP" 
     '[Identifier, Subcommand "LS", Flag "*", CList Capability]
-makeMsgLenses ''SrvCapLs ["identifier", "unused", "multiLine", "capabilities"]
+makeMsgLenses ''SrvCapLs ["identifier", "unused", "multiLine", "caps"]
+
+srvCapLsCapabilities :: Lens' SrvCapLs [Capability]
+srvCapLsCapabilities = srvCapLsCaps . _Wrapped
 
 -- | The LIST subcommand is used to list the capabilities associated with the
 -- active connection. The client should send a LIST subcommand with no other
@@ -148,28 +148,47 @@ type CapList = Msg "CAP LIST" '[]
 -- | All but the last line in multi-line responses must have the * enabled.
 type SrvCapList = Msg "CAP" 
     '[Identifier, Subcommand "LIST", Flag "*", CList Capability]
-makeMsgLenses ''SrvCapList ["identifier", "unused", "multiLine", "capabilities"]
+makeMsgLenses ''SrvCapList ["identifier", "unused", "multiLine", "caps"]
+
+srvCapListCapabilities :: Lens' SrvCapList [Capability]
+srvCapListCapabilities = srvCapListCaps . _Wrapped
 
 -- | The REQ subcommand is used to request a change in capabilities associated
 -- with the active connection. It’s sole parameter must be a list of
 -- space-separated capability identifiers. Each capability identifier may be
 -- prefixed with a dash (-) to designate that the capability should be disabled.
 type CapReq = Msg "CAP REQ" '[CList Capability]
-makeMsgLenses ''CapReq ["capabilities"]
+makeMsgLenses ''CapReq ["caps"]
+
+capReqCapabilities :: Lens' CapReq [Capability]
+capReqCapabilities = capReqCaps . _Wrapped
 
 type SrvCapReq = Msg "CAP" '[Identifier, ReqAnswer, CList Capability]
-makeMsgLenses ''SrvCapReq ["identifier", "answer", "capabilities"]
+makeMsgLenses ''SrvCapReq ["identifier", "answer", "caps"]
+
+srvCapReqCapabilities :: Lens' SrvCapReq [Capability]
+srvCapReqCapabilities = srvCapReqCaps . _Wrapped
+
 
 -- | Client side ACK.
 type CapAck = Msg "CAP ACK" '[CList Capability]
-makeMsgLenses ''CapAck ["capabilities"]
+makeMsgLenses ''CapAck ["caps"]
+
+capAckCapabilities :: Lens' CapAck [Capability]
+capAckCapabilities = capAckCaps . _Wrapped
 
 -- | The END subcommand signals to the server that capability negotiation is
 -- complete and requests that the server continue with client registration. 
 type CapEnd = Msg "CAP END" '[]
 
 type SrvCapNew = Msg "CAP" '[Identifier, Subcommand "NEW", CList Capability]
-makeMsgLenses ''SrvCapNew ["identifier", "subcommand", "capabilities"]
+makeMsgLenses ''SrvCapNew ["identifier", "subcommand", "caps"]
+
+srvCapNewCapabilities :: Lens' SrvCapNew [Capability]
+srvCapNewCapabilities = srvCapNewCaps . _Wrapped
 
 type SrvCapDel = Msg "CAP" '[Identifier, Subcommand "DEL", CList Capability]
-makeMsgLenses ''SrvCapDel ["identifier", "subcommand", "capabilities"]
+makeMsgLenses ''SrvCapDel ["identifier", "subcommand", "caps"]
+
+srvCapDelCapabilities :: Lens' SrvCapDel [Capability]
+srvCapDelCapabilities = srvCapDelCaps . _Wrapped
