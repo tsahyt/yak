@@ -27,6 +27,9 @@ module Network.Yak.Client.Lens
  
     -- * Server Queries and Commands
     motdTarget,
+    lusersParam,
+    lusersMask,
+    lusersTarget,
     versionTarget,
     adminTarget,
     connectTarget,
@@ -51,6 +54,16 @@ module Network.Yak.Client.Lens
     noticeMessage,
     noticeChannel,
     noticeNick,
+
+    -- * User-based Queries
+    whoMask,
+    whoFlag,
+    whoIsTarget,
+    whoIsMasks,
+    whoWasNicks,
+    whoWasParam,
+    whoWasCount,
+    whoWasTarget,
 
     -- * Optional Messages
     userhostNick1,
@@ -82,6 +95,7 @@ makeMsgLenses ''Topic    ["channel", "message"]
 makeMsgLenses ''Names    ["channels"]
 makeMsgLenses ''List     ["channels", "elistCond"]
 makeMsgLenses ''Motd     ["target"]
+makeMsgLenses ''Lusers   ["param"]
 makeMsgLenses ''Version  ["target"]
 makeMsgLenses ''Admin    ["target"]
 makeMsgLenses ''Connect  ["target", "connInfo"]
@@ -91,8 +105,23 @@ makeMsgLenses ''Info     ["target"]
 makeMsgLenses ''Mode     ["target", "setter"]
 makeMsgLenses ''Privmsg  ["targets", "message"]
 makeMsgLenses ''Notice   ["targets", "message"]
+makeMsgLenses ''Who      ["mask", "flag"]
+makeMsgLenses ''WhoIs    ["target", "masks"]
+makeMsgLenses ''WhoWas   ["nicks", "param"]
 makeMsgLenses ''Userhost ["nick1", "nick2", "nick3", "nick4", "nick5"]
 makeMsgLenses ''Kill     ["nick", "message"]
+
+lusersMask :: Traversal' Lusers Mask
+lusersMask = lusersParam . _Just . _1
+
+lusersTarget :: Traversal' Lusers Hostname
+lusersTarget = lusersParam . _Just . _2 . _Just
+
+whoWasCount :: Traversal' WhoWas Int
+whoWasCount = whoWasParam . _Just . _1
+
+whoWasTarget :: Traversal' WhoWas Hostname
+whoWasTarget = whoWasParam . _Just . _2 . _Just
 
 modeChannel :: Traversal' Mode Channel
 modeChannel = modeTarget . _Left

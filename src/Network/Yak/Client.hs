@@ -30,6 +30,7 @@ module Network.Yak.Client
 
     -- * Server Queries and Commands
     Motd,
+    Lusers,
     Version,
     Admin,
     Connect,
@@ -41,6 +42,11 @@ module Network.Yak.Client
     -- * Sending Messages
     Privmsg,
     Notice,
+
+    -- * User-based queries
+    Who,
+    WhoIs,
+    WhoWas,
 
     -- * Optional Messages
     Userhost,
@@ -104,6 +110,9 @@ type List = Msg "LIST" '[[Channel], Maybe Text]
 -- | > MOTD [<target>]
 type Motd = Msg "MOTD" '[Hostname]
 
+-- | > LUSERS [<mask> [<target>]]
+type Lusers = Msg "LUSERS" '[Maybe (Mask, Maybe Hostname)]
+
 -- | > VERSION [<target>]
 type Version = Msg "VERSION" '[Maybe Hostname]
 
@@ -132,6 +141,16 @@ type Privmsg = Msg "PRIVMSG" '[NonEmpty (Either Channel Nickname), Message]
 
 -- | > NOTICE <target>{,<target>} <text to be sent>
 type Notice = Msg "NOTICE" '[NonEmpty (Either Channel Nickname), Message]
+
+-- User based queries
+-- | > WHO [<mask>] [o]
+type Who    = Msg "WHO" '[Maybe Mask, Flag "o"]
+
+-- | > WHOIS [<target>] <mask>{,<mask>}
+type WhoIs  = Msg "WHOIS" '[Maybe Hostname, NonEmpty Mask]
+
+-- | > WHOWAS <nickname>{,<nickname} [<count>, [<target>]]
+type WhoWas = Msg "WHOWAS" '[NonEmpty Nickname, Maybe (Int, Maybe Hostname)]
 
 -- Optional Messages
 -- | > USERHOST <nickname>{ <nickname>}
