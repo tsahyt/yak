@@ -17,6 +17,7 @@ library
   hs-source-dirs:      src
   exposed-modules:     Network.Yak
                        Network.Yak.Client
+                       Network.Yak.Capabilities
                        Network.Yak.Responses
                        Network.Yak.Types
                        Network.Yak.TH
