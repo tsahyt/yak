@@ -1,8 +1,71 @@
+-- | Capability negotiation as per IRCv3 spec. Based on v3.1
+-- <http://ircv3.net/specs/core/capability-negotiation-3.1.html> and v3.2
+-- <http://ircv3.net/specs/core/capability-negotiation-3.2.html>.
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
 module Network.Yak.Capabilities
+(
+    Identifier,
+    Subcommand,
+    CapModifier(..),
+    _ModDisable,
+    _ModAck,
+    _ModSticky,
+    _ModNone,
+    Capability(..),
+    modifier,
+    capability,
+    ReqAnswer(..),
+    _Ack,
+    _Nak,
+
+    -- * Invalid Capabilities
+    ErrInvalidcap,
+    errInvalidcapIdentifier,
+    errInvalidcapCommand,
+    errInvalidcapMessage,
+
+    -- * Capability Messages
+    -- ** LS
+    CapLs,
+    capLs302,
+    SrvCapLs,
+    srvCapLsIdentifier,
+    srvCapLsUnused,
+    srvCapLsMultiLine,
+    srvCapLsCapabilities,
+    
+    -- ** LIST
+    CapList,
+    SrvCapList,
+    srvCapListIdentifier,
+    srvCapListUnused,
+    srvCapListMultiLine,
+    srvCapListCapabilities,
+
+    -- ** REQ
+    CapReq,
+    capReqCapabilities,
+    SrvCapReq,
+    srvCapReqIdentifier,
+    srvCapReqAnswer,
+    srvCapReqCapabilities,
+    CapAck,
+    capAckCapabilities,
+    CapEnd,
+
+    -- ** NEW/DEL
+    SrvCapNew,
+    srvCapNewIdentifier,
+    srvCapNewSubcommand,
+    srvCapNewCapabilities,
+    SrvCapDel,
+    srvCapDelIdentifier,
+    srvCapDelSubcommand,
+    srvCapDelCapabilities,
+)
 where
 
 import Control.Lens.TH
@@ -45,8 +108,8 @@ instance Parameter Capability where
                    , pure ModNone ]
         <*> seize
 
--- | A @REQ@ ('CapReq', 'SrvCapReq'), can be answered either with an @ACK@ or a
--- @NAK@.
+-- | A REQ ('CapReq', 'SrvCapReq'), can be answered either with an ACK or a
+-- NAK.
 data ReqAnswer = Ack | Nak
     deriving (Eq, Show, Read, Ord)
 
@@ -63,31 +126,31 @@ instance Parameter ReqAnswer where
 type ErrInvalidcap = Msg "410" [Identifier, Text, Message]
 makeMsgLenses ''ErrInvalidcap ["identifier", "command", "message"]
 
--- | The @LS@ subcommand is used to list the capabilities supported by the
+-- | The LS subcommand is used to list the capabilities supported by the
 -- server.  The client should send an LS subcommand with no other arguments to
 -- solicit a list of all capabilities.
 --
--- Since v3.2, @LS@ can be invoked with a 302 flag.
+-- Since v3.2, LS can be invoked with a 302 flag.
 type CapLs = Msg "CAP LS" '[Flag "302"]
 makeMsgLenses ''CapLs ["302"]
 
--- | All but the last line in multi-line responses must have the @*@ enabled.
+-- | All but the last line in multi-line responses must have the * enabled.
 type SrvCapLs = Msg "CAP" 
     '[Identifier, Subcommand "LS", Flag "*", CList Capability]
 makeMsgLenses ''SrvCapLs ["identifier", "unused", "multiLine", "capabilities"]
 
--- | The @LIST@ subcommand is used to list the capabilities associated with the
+-- | The LIST subcommand is used to list the capabilities associated with the
 -- active connection. The client should send a LIST subcommand with no other
 -- arguments to solicit a list of active capabilities.  If no capabilities are
 -- active, an empty parameter must be sent.
 type CapList = Msg "CAP LIST" '[]
 
--- | All but the last line in multi-line responses must have the @*@ enabled.
+-- | All but the last line in multi-line responses must have the * enabled.
 type SrvCapList = Msg "CAP" 
     '[Identifier, Subcommand "LIST", Flag "*", CList Capability]
 makeMsgLenses ''SrvCapList ["identifier", "unused", "multiLine", "capabilities"]
 
--- | The @REQ@ subcommand is used to request a change in capabilities associated
+-- | The REQ subcommand is used to request a change in capabilities associated
 -- with the active connection. It’s sole parameter must be a list of
 -- space-separated capability identifiers. Each capability identifier may be
 -- prefixed with a dash (-) to designate that the capability should be disabled.
@@ -97,11 +160,11 @@ makeMsgLenses ''CapReq ["capabilities"]
 type SrvCapReq = Msg "CAP" '[Identifier, ReqAnswer, CList Capability]
 makeMsgLenses ''SrvCapReq ["identifier", "answer", "capabilities"]
 
--- | Client side @ACK@.
+-- | Client side ACK.
 type CapAck = Msg "CAP ACK" '[CList Capability]
 makeMsgLenses ''CapAck ["capabilities"]
 
--- | The @END@ subcommand signals to the server that capability negotiation is
+-- | The END subcommand signals to the server that capability negotiation is
 -- complete and requests that the server continue with client registration. 
 type CapEnd = Msg "CAP END" '[]
 
