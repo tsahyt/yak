@@ -12,6 +12,9 @@
 -- In case your use case allows more precise parsing, or you need server
 -- specific response codes not listed, you can always hide the relevant types
 -- and define your own by simply building the appropriate type synonym.
+--
+-- **NOTE:** Because of size and a lack of test cases, this module is largely
+-- untested. Here be dragons!
 {-# Language DataKinds #-}
 {-# Language TemplateHaskell #-}
 module Network.Yak.Responses
