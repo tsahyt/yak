@@ -200,10 +200,16 @@ instance Parameter Host where
              $ hostNick h 
             <> maybe "" (T.cons '!') (hostUser h) 
             <> maybe "" (T.cons '@') (hostHost h)
-    seize = Host
-         <$> (decodeUtf8 <$> takeTill (inClass "!@ "))
-         <*> optional (decodeUtf8 <$> (char '!' *> takeTill (inClass "@ ")))
-         <*> optional (decodeUtf8 <$> (char '@' *> takeTill isSpace))
+    seize = do
+        n <- takeTill (inClass " .!@\r\n")
+        p <- peekChar
+        case p of
+            Just c | c == '.' -> empty
+            _ -> Host (decodeUtf8 n)
+             <$> optional (decodeUtf8 <$> 
+                              (char '!' *> takeTill (inClass " @\r\n")))
+             <*> optional (decodeUtf8 <$> 
+                              (char '@' *> takeTill (inClass " \r\n")))
 
 instance (Parameter a, Parameter b) => Parameter (a, b) where
     render (a,b) = render a <> " " <> render b
