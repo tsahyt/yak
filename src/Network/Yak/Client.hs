@@ -52,6 +52,8 @@ module Network.Yak.Client
     Userhost,
 
     -- * Miscellaneous Messages
+    Ping,
+    Pong,
     Kill
 )
 where
@@ -160,5 +162,11 @@ type Userhost = Msg "USERHOST"
     -- separation in random places. Thank you, IRC.
 
 -- Miscellaneous Messages
+-- | > PING <server1> [<server2>]
+type Ping = Msg "PING" '[Hostname, Maybe Hostname]
+
+-- | > PONG <server1> [<server2>]
+type Pong = Msg "PONG" '[Hostname, Maybe Hostname]
+
 -- | > KILL <nickname> <comment>
 type Kill = Msg "KILL" '[Nickname, Message]

@@ -73,6 +73,10 @@ module Network.Yak.Client.Lens
     userhostNick5,
     
     -- * Miscellaneous Messages
+    pingServer1,
+    pingServer2,
+    pongServer1,
+    pongServer2,
     killNick,
     killMessage,
 )
@@ -109,6 +113,8 @@ makeMsgLenses ''Who      ["mask", "flag"]
 makeMsgLenses ''WhoIs    ["target", "masks"]
 makeMsgLenses ''WhoWas   ["nicks", "param"]
 makeMsgLenses ''Userhost ["nick1", "nick2", "nick3", "nick4", "nick5"]
+makeMsgLenses ''Ping     ["server1", "server2"]
+makeMsgLenses ''Pong     ["server1", "server2"]
 makeMsgLenses ''Kill     ["nick", "message"]
 
 lusersMask :: Traversal' Lusers Mask
