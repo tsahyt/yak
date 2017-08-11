@@ -12,7 +12,8 @@ module Network.Yak
 (
     emit,
     emitSome,
-    fetch
+    fetch,
+    fetch'
 )
 where
 

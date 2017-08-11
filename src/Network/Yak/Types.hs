@@ -79,21 +79,23 @@ import GHC.Exts (IsList (..))
 import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as B
 
-data Prefix 
-    = PrefixServer Text
-    | PrefixUser Host
-    deriving (Eq, Show, Read, Ord)
-
 type Username = Text
 type Nickname = Text
 type Mask = Text
 type Hostname = Text
 
-data Host = Host
-    { hostNick :: Nickname
-    , hostUser :: Maybe Username
-    , hostHost :: Maybe Hostname
-    }
+declareLenses [d|
+    data Host = Host
+        { hostNick :: Nickname
+        , hostUser :: Maybe Username
+        , hostHost :: Maybe Hostname
+        }
+        deriving (Eq, Show, Read, Ord)
+    |]
+
+data Prefix 
+    = PrefixServer Text
+    | PrefixUser Host
     deriving (Eq, Show, Read, Ord)
 
 -- | Proxy type for holding IRC messages
@@ -197,9 +199,9 @@ instance Parameter Char where
 
 instance Parameter Host where
     render h = render
-             $ hostNick h 
-            <> maybe "" (T.cons '!') (hostUser h) 
-            <> maybe "" (T.cons '@') (hostHost h)
+             $ view hostNick h 
+            <> maybe "" (T.cons '!') (view hostUser h) 
+            <> maybe "" (T.cons '@') (view hostHost h)
     seize = do
         n <- takeTill (inClass " .!@\r\n")
         p <- peekChar
