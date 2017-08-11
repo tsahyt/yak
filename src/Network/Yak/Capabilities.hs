@@ -104,3 +104,9 @@ makeMsgLenses ''CapAck ["capabilities"]
 -- | The @END@ subcommand signals to the server that capability negotiation is
 -- complete and requests that the server continue with client registration. 
 type CapEnd = Msg "CAP END" '[]
+
+type SrvCapNew = Msg "CAP" '[Identifier, Subcommand "NEW", CList Capability]
+makeMsgLenses ''SrvCapNew ["identifier", "subcommand", "capabilities"]
+
+type SrvCapDel = Msg "CAP" '[Identifier, Subcommand "DEL", CList Capability]
+makeMsgLenses ''SrvCapDel ["identifier", "subcommand", "capabilities"]
