@@ -50,7 +50,7 @@ emitSome (SomeMsg r) = emit r
 -- return type polymorphic and will pick a parser that fits the requested type,
 -- which is determined either by type inference or can be picked by explicit
 -- type annotation.
-fetch :: forall c p. (Parameter (PList p), KnownSymbol c) 
+fetch :: forall c p. (Parameter (PList p), KnownSymbol c)
       => ByteString -> Maybe (Msg c p)
 fetch = either (const Nothing) Just . parseOnly fetch'
 
