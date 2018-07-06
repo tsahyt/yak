@@ -46,11 +46,11 @@ emit Msg{..} = fromMaybe ""
 emitSome :: SomeMsg -> ByteString
 emitSome (SomeMsg r) = emit r
 
--- | Decode an IRC message from a 'ByteString' into a 'Msg' or a coproduct
--- thereof. This function is return type polymorphic and will pick a parser that
--- fits the requested type, which is determined either by type inference or can
--- be picked by explicit type annotation.
 class Fetch a where
+    -- | Decode an IRC message from a 'ByteString' into a 'Msg' or a coproduct
+    -- thereof. This function is return type polymorphic and will pick a parser
+    -- that fits the requested type, which is determined either by type
+    -- inference or can be picked by explicit type annotation.
     fetch :: ByteString -> Maybe a
 
 instance (Parameter (PList p), KnownSymbol c) => Fetch (Msg c p) where
