@@ -13,6 +13,12 @@ module Network.Yak
     , emitSome
     , fetch
     , fetch'
+    -- * Messages
+    , T.build
+    , T.buildPrefix
+    , T.vacant
+    , T.castMsg
+    , (T.<:>)
     -- * Types
     , module Network.Yak.Types
     ) where
@@ -25,8 +31,9 @@ import Data.Monoid
 import Data.Proxy
 import Data.Text.Encoding
 import GHC.TypeLits
-import Network.Yak.Types
+import Network.Yak.Types hiding (build, buildPrefix, vacant, castMsg, (<:>))
 
+import qualified Network.Yak.Types as T
 import qualified Data.ByteString.Char8 as B
 
 -- | Encode an IRC message to a 'ByteString', ready for the network
