@@ -7,7 +7,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Paul Ogris
 maintainer:          paul@tsahyt.com
-copyright:           2017 Paul Ogris
+copyright:           2018 Paul Ogris
 category:            Network
 build-type:          Simple
 extra-source-files:  README.md
