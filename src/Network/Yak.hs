@@ -9,21 +9,21 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Network.Yak
-(
-    emit,
-    emitSome,
-    fetch,
-    fetch'
-)
-where
+    ( emit
+    , emitSome
+    , fetch
+    , fetch'
+    -- * Types
+    , module Network.Yak.Types
+    ) where
 
 import Control.Applicative
 import Data.Attoparsec.ByteString.Char8
-import Data.Text.Encoding
 import Data.ByteString.Char8 (ByteString)
 import Data.Maybe
 import Data.Monoid
 import Data.Proxy
+import Data.Text.Encoding
 import GHC.TypeLits
 import Network.Yak.Types
 
