@@ -169,7 +169,7 @@ instance Parameter (PList '[]) where
     seize  = pure PNil
 
 -- | Proxy type for inserting special syntax
-data Unused a = Unused deriving (Show, Eq, Ord, Read)
+data Unused (a :: Symbol) = Unused deriving (Show, Eq, Ord, Read)
 
 instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
     render _ = B.pack . symbolVal $ Proxy @a

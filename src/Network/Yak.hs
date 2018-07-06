@@ -46,13 +46,21 @@ emit Msg{..} = fromMaybe ""
 emitSome :: SomeMsg -> ByteString
 emitSome (SomeMsg r) = emit r
 
--- | Decode an IRC message from a 'ByteString' into a 'Msg'. This function is
--- return type polymorphic and will pick a parser that fits the requested type,
--- which is determined either by type inference or can be picked by explicit
--- type annotation.
-fetch :: forall c p. (Parameter (PList p), KnownSymbol c)
-      => ByteString -> Maybe (Msg c p)
-fetch = either (const Nothing) Just . parseOnly fetch'
+-- | Decode an IRC message from a 'ByteString' into a 'Msg' or a coproduct
+-- thereof. This function is return type polymorphic and will pick a parser that
+-- fits the requested type, which is determined either by type inference or can
+-- be picked by explicit type annotation.
+class Fetch a where
+    fetch :: ByteString -> Maybe a
+
+instance (Parameter (PList p), KnownSymbol c) => Fetch (Msg c p) where
+    fetch = either (const Nothing) Just . parseOnly fetch'
+
+instance (Fetch a, Fetch b) => Fetch (Either a b) where
+    fetch x =
+        case fetch @a x of
+            Just l -> Just (Left l)
+            Nothing -> Right <$> fetch x
 
 -- | Like 'fetch' but offers the underlying attoparsec Parser. This can be used
 -- for e.g. the construction of ad-hoc sum types catching multiple message
