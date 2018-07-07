@@ -3,7 +3,7 @@ version:             0.1.0.0
 synopsis:            A strongly typed IRC library
 description:         See README.rst
 homepage:            https://github.com/tsahyt/yak#readme
-license:             BSD3
+license:             MIT
 license-file:        LICENSE
 author:              Paul Ogris
 maintainer:          paul@tsahyt.com
