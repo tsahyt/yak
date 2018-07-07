@@ -19,6 +19,10 @@ passing around *any* IRC message.
 Messages can be created using a polymorphic variadic function `build`, which
 serves as a general purpose constructor for all IRC message types.
 
+Fields of messages can be accessed either through pattern matching on the `Msg`
+constructor and the parameter list therein, or through lenses. A TH function is
+provided to generate lenses for newly defined message types.
+
 ## Predefined Messages
 
 The `Network.Yak.Client` module defines message types commonly used by IRC
