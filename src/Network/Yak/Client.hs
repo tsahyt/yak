@@ -111,7 +111,17 @@ module Network.Yak.Client
     pongServer2,
     Kill,
     killNick,
-    killMessage
+    killMessage,
+
+    -- * Extras
+    -- | Common messages that are not specified out in the document above.
+    Kick,
+    kickChannels,
+    kickNicknames,
+    kickMessage,
+    Invite,
+    inviteNickname,
+    inviteChannel
 )
 where
 
@@ -290,3 +300,13 @@ makeMsgLenses ''Pong ["server1", "server2"]
 -- | > KILL <nickname> <comment>
 type Kill = Msg "KILL" '[Nickname, Message]
 makeMsgLenses ''Kill ["nick", "message"]
+
+-- | > KICK <channel>(,<channel>)* <nickname>(,<nickname>)* [message]
+-- As defined in RFC 2812
+type Kick = Msg "KICK" '[NonEmpty Channel, NonEmpty Nickname, Maybe Message]
+makeMsgLenses ''Kick ["channels", "nicknames", "message"]
+
+-- | > INVITE <nickname> <channel>
+-- As defined in RFC 2812
+type Invite = Msg "INVITE" '[Nickname, Channel]
+makeMsgLenses ''Invite ["nickname", "channel"]
