@@ -11,6 +11,7 @@
 module Network.Yak
     ( emit
     , emitSome
+    , Fetch
     , fetch
     , fetch'
     -- * Messages
