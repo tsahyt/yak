@@ -160,7 +160,10 @@ instance Parameter a => Parameter (Maybe a) where
 instance (Parameter x, Parameter (PList xs)) 
       => Parameter (PList (x ': xs)) where
     render (PCons x PNil) = render x
-    render (PCons x xs) = render x <> " " <> render xs
+    render (PCons x xs) = 
+        case render xs of
+            "" -> render x
+            _  -> render x <> " " <> render xs
 
     seize = PCons <$> seize <*> (skipSpace *> seize)
 
