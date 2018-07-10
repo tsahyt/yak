@@ -3,6 +3,8 @@
 -- responses.  See "Network.Yak.Response" for standard-compliant responses.
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Network.Yak.Client
 (
     -- * Connection Messages
@@ -121,7 +123,12 @@ module Network.Yak.Client
     kickMessage,
     Invite,
     inviteNickname,
-    inviteChannel
+    inviteChannel,
+
+    -- * Common Accessors
+    HasChannel(..),
+    HasNick(..),
+    HasHostname(..)
 )
 where
 
@@ -310,3 +317,99 @@ makeMsgLenses ''Kick ["channels", "nicknames", "message"]
 -- As defined in RFC 2812
 type Invite = Msg "INVITE" '[Nickname, Channel]
 makeMsgLenses ''Invite ["nickname", "channel"]
+
+-- | Class for extracting the channel out of messages that may contain channels
+class HasChannel a where
+    channel :: Traversal' a Channel
+
+instance HasChannel Join where
+    channel = joinChannels . traverse
+
+instance HasChannel Part where
+    channel = partChannels . traverse
+
+instance HasChannel Topic where
+    channel = topicChannel
+
+instance HasChannel Names where
+    channel = namesChannels . traverse
+
+instance HasChannel List where
+    channel = listChannels . traverse
+
+instance HasChannel Privmsg where
+    channel = privmsgChannel
+
+instance HasChannel Mode where
+    channel = modeChannel
+
+instance HasChannel Notice where
+    channel = noticeChannel
+
+instance HasChannel Kick where
+    channel = kickChannels . traverse
+
+instance HasChannel Invite where
+    channel = inviteChannel
+
+-- | Messages containing a nickname in one (unambigious) position.
+class HasNick a where
+    nick :: Traversal' a Nickname
+
+instance HasNick Nick where
+    nick = nickNickname
+
+instance HasNick Oper where
+    nick = operName
+
+instance HasNick Mode where
+    nick = modeNick
+
+instance HasNick Privmsg where
+    nick = privmsgNick
+
+instance HasNick Notice where
+    nick = noticeNick
+
+instance HasNick WhoWas where
+    nick = whoWasNicks . traverse
+
+instance HasNick Kill where
+    nick = killNick
+
+instance HasNick Kick where
+    nick = kickNicknames . traverse
+
+instance HasNick Invite where
+    nick = inviteNickname
+
+-- | Messages containing a hostname in one (unambigious) position
+class HasHostname a where
+    hostname :: Traversal' a Hostname
+
+instance HasHostname Motd where
+    hostname = motdTarget
+
+instance HasHostname Lusers where
+    hostname = lusersTarget
+
+instance HasHostname Version where
+    hostname = versionTarget . _Just
+
+instance HasHostname Admin where
+    hostname = adminTarget . _Just
+
+instance HasHostname Time where
+    hostname = timeTarget . _Just
+
+instance HasHostname Stats where
+    hostname = statsTarget . _Just
+
+instance HasHostname Info where
+    hostname = infoTarget . _Just
+
+instance HasHostname WhoIs where
+    hostname = whoIsTarget . _Just
+
+instance HasHostname WhoWas where
+    hostname = whoWasTarget
