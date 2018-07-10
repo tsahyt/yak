@@ -21,6 +21,9 @@ module Network.Yak.Types
 (
     Prefix(..),
     Host(..),
+    hostNick,
+    hostUser,
+    hostHost,
     Msg(..),
     build,
     buildPrefix,
