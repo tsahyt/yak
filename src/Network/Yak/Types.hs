@@ -68,6 +68,7 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.Monoid
+import Data.Semigroup (Semigroup)
 import Data.Void
 import Data.Maybe (fromMaybe)
 import Data.Word (Word)
@@ -404,7 +405,7 @@ buildPrefix :: Build '[] f => Prefix -> f
 buildPrefix p = build' (vacant & prefix .~ Just p)
 
 newtype Channel = Channel { getChannel :: Text }
-    deriving (Eq, Show, Ord, Read, IsString)
+    deriving (Eq, Show, Ord, Read, IsString, Monoid)
 
 makeWrapped ''Channel
 
@@ -416,7 +417,7 @@ instance Parameter Channel where
         pure . Channel . T.pack $ mark : name
 
 newtype Message = Message { getMessage :: Text }
-    deriving (Eq, Show, Ord, Read, IsString)
+    deriving (Eq, Show, Ord, Read, IsString, Monoid)
 
 makeWrapped ''Message
 
@@ -437,7 +438,7 @@ instance Parameter ModeSign where
 
 newtype ModeString = 
     ModeString { getModeString :: NonEmpty (ModeSign, NonEmpty Char) }
-    deriving (Eq, Show, Ord, Read)
+    deriving (Eq, Show, Ord, Read, Semigroup)
 
 makeWrapped ''ModeString
 
