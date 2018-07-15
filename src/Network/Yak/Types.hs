@@ -56,7 +56,9 @@ module Network.Yak.Types
     ureplyIsOp,
     ureplyIsAway,
     ureplyHostname,
-    Member(..)
+    Member(..),
+    memberPrefix,
+    memberData
 )
 where
 
@@ -503,8 +505,13 @@ instance Parameter UReply where
         <*> (char '=' *> ((True <$ char '-') <|> (False <$ char '+')))
         <*> seize
 
-data Member a = Member (Maybe Char) a
-    deriving (Eq, Show, Ord, Read)
+declareLenses [d|
+    data Member a = Member
+        { memberPrefix :: Maybe Char
+        , memberData :: a
+        }
+        deriving (Eq, Show, Ord, Read)
+    |]
 
 instance Parameter a => Parameter (Member a) where
     render (Member p c) = maybe "" B.singleton p <> (render c)
