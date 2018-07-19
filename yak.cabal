@@ -19,7 +19,6 @@ library
                        Network.Yak.Capabilities
                        Network.Yak.Client
                        Network.Yak.Modes
-                       Network.Yak.Modes.Types
                        Network.Yak.Responses
                        Network.Yak.TH
                        Network.Yak.Types
