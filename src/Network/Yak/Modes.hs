@@ -18,15 +18,15 @@ typeA "ban" 'b' ''HostMask
 
 typeA "exception" 'e' ''HostMask
 
-typeD "secret" 's'
-
-typeD "moderated" 'm'
-
 typeB "key" 'k' ''Text
 
 typeC "clientLimit" 'l' ''Int
 
 typeD "protected" 'm'
+
+typeD "secret" 's'
+
+typeD "moderated" 'm'
 
 test :: ModeStr
 test = putBan HostMask <> delKey "foobar" <> putModerated
