@@ -17,7 +17,7 @@ module Network.Yak.Modes
     , Mode(..)
     , OpaqueMode(..)
     , ModeParameter(..)
-    , ModeOp
+    , ModeOp(..)
     , modeOps
     -- * Building Mode Strings
     , get
@@ -39,7 +39,7 @@ module Network.Yak.Modes
     ) where
 
 import Control.Applicative
-import Data.List.NonEmpty (NonEmpty, fromList)
+import Data.List.NonEmpty (NonEmpty)
 import Data.Attoparsec.ByteString.Char8 (Parser)
 import Data.ByteString.Char8 (ByteString)
 import Data.Semigroup
@@ -134,6 +134,7 @@ matchMode smodes f
             Setting _ -> pure $ set m
             Unsetting _ -> pure $ unset m
             Getting _ -> fail "invalid modestring"
+    | otherwise = empty
 
 fetchModeStr :: ServerModes -> ByteString -> Maybe ModeStr
 fetchModeStr smodes = either (const Nothing) Just . A.parseOnly go
