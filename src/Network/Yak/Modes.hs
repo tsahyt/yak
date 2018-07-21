@@ -39,6 +39,7 @@ module Network.Yak.Modes
     ) where
 
 import Control.Applicative
+import Control.Monad (guard)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Attoparsec.ByteString.Char8 (Parser)
 import Data.ByteString.Char8 (ByteString)
@@ -142,6 +143,7 @@ fetchModeStr smodes = either (const Nothing) Just . A.parseOnly go
     go = do
         ms <- modes
         A.skipSpace
+        guard $ not . null $ ms
         foldl1 (<>) <$> sequence ms
     modes = do
         ms <- A.takeTill A.isSpace
@@ -292,8 +294,3 @@ defaultModes =
           , OpaqueMode noExternal
           ]
     }
-
-{-
- -test :: ModeStr
- -test = set ban "foo!bar@qux" <> unset exception "qux!fuu@bar" <> set moderated
- -}
