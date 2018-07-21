@@ -8,6 +8,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Network.Yak.Modes
     ( ModeStr
@@ -33,9 +34,26 @@ module Network.Yak.Modes
     , moderated
     , protectedTopic
     , noExternal
+    -- * Common User Modes
+    , UserMode
+    , pattern UserMode
+    , invisible
+    , oper
+    , localOper
+    , registered
+    , wallops
+    -- * Channel Member Prefix Modes
+    , PrefixMode
+    , pattern PrefixMode
+    , founder
+    , protected
+    , operator
+    , halfop
+    , voice
     -- * Server Modes
     , ServerModes(..)
     , defaultModes
+    , prefixModes
     ) where
 
 import Control.Applicative
@@ -279,6 +297,46 @@ protectedTopic = ModeTypeD 't'
 noExternal :: Mode 'TypeD Void
 noExternal = ModeTypeD 'n'
 
+type UserMode = Mode 'TypeD Void
+
+pattern UserMode :: Char -> UserMode
+pattern UserMode c = ModeTypeD c
+
+invisible :: UserMode
+invisible = UserMode 'i'
+
+oper :: UserMode
+oper = UserMode 'o'
+
+localOper :: UserMode
+localOper = UserMode 'O'
+
+registered :: UserMode
+registered = UserMode 'r'
+
+wallops :: UserMode
+wallops = UserMode 'w'
+
+type PrefixMode = Mode 'TypeB HostMask
+
+pattern PrefixMode :: Char -> PrefixMode
+pattern PrefixMode c = ModeTypeB c
+
+founder :: PrefixMode
+founder = PrefixMode 'q'
+
+protected :: PrefixMode
+protected = PrefixMode 'a'
+
+operator :: PrefixMode
+operator = PrefixMode 'o'
+
+halfop :: PrefixMode
+halfop = PrefixMode 'h'
+
+voice :: PrefixMode
+voice = PrefixMode 'v'
+
 defaultModes :: ServerModes
 defaultModes =
     ServerModes
@@ -292,5 +350,25 @@ defaultModes =
           [ OpaqueMode moderated
           , OpaqueMode protectedTopic
           , OpaqueMode noExternal
+          , OpaqueMode invisible
+          , OpaqueMode oper
+          , OpaqueMode localOper
+          , OpaqueMode registered
+          , OpaqueMode wallops
           ]
+    }
+
+prefixModes :: ServerModes
+prefixModes =
+    ServerModes
+    { typeAModes = []
+    , typeBModes =
+          [ OpaqueMode founder
+          , OpaqueMode protected
+          , OpaqueMode operator
+          , OpaqueMode halfop
+          , OpaqueMode voice
+          ]
+    , typeCModes = []
+    , typeDModes = []
     }
