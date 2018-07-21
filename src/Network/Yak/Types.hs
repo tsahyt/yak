@@ -47,8 +47,6 @@ module Network.Yak.Types
     Username,
     Hostname,
     Mask,
-    ModeSign(..),
-    ModeString(..),
     Modes(..),
     Token(..),
     UReply(..),
@@ -70,7 +68,6 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
 import Data.Monoid
-import Data.Semigroup (Semigroup)
 import Data.Void
 import Data.Maybe (fromMaybe)
 import Data.Word (Word)
@@ -192,6 +189,10 @@ instance KnownSymbol a => Parameter (Flag (a :: Symbol)) where
     render Unset = ""
     seize = let x = B.pack $ symbolVal (Proxy @a) 
              in fromMaybe Unset <$> optional (Set <$ string x)
+
+instance Parameter ByteString where
+    render = id
+    seize = takeByteString
 
 instance Parameter Word where
     render = render . T.pack . show
@@ -426,34 +427,6 @@ makeWrapped ''Message
 instance Parameter Message where
     render = render . T.cons ':' . getMessage
     seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
-
-data ModeSign = AddMode | RemoveMode
-    deriving (Eq, Show, Ord, Read)
-
-modeSignChar :: ModeSign -> Char
-modeSignChar AddMode = '+'
-modeSignChar RemoveMode = '-'
-
-instance Parameter ModeSign where
-    render = B.singleton . modeSignChar
-    seize = (AddMode <$ char '+') <|> (RemoveMode <$ char '-')
-
-newtype ModeString = 
-    ModeString { getModeString :: NonEmpty (ModeSign, NonEmpty Char) }
-    deriving (Eq, Show, Ord, Read, Semigroup)
-
-makeWrapped ''ModeString
-
-instance Parameter ModeString where
-    render = B.pack . concat . toList . fmap go . getModeString
-        where go (x,xs) = modeSignChar x : toList xs
-    seize  = ModeString . fromList <$> many1 block
-        where block = (,) <$> seize 
-                          <*> (fromList <$> many1 (satisfy isAlpha_ascii))
-
-instance IsString ModeString where
-    fromString = either (error "Invalid ModeString Literal") id 
-               . parseOnly seize . B.pack
 
 newtype Modes = Modes { getModes :: [Char] }
 

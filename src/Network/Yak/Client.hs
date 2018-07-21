@@ -5,6 +5,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RankNTypes #-}
 module Network.Yak.Client
 (
     -- * Connection Messages
@@ -69,7 +70,6 @@ module Network.Yak.Client
     modeChannel,
     modeNick,
     modeString,
-    modeParams,
 
     -- * Sending Messages
     Privmsg,
@@ -133,11 +133,13 @@ module Network.Yak.Client
 where
 
 import Control.Lens
+import Data.ByteString.Char8 (ByteString)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import Data.Word (Word)
 import Network.Yak.TH
 import Network.Yak.Types
+import Network.Yak.Modes (ServerModes, ModeStr, fetchModeStr)
 
 -- Connection Messages
 -- | > AUTHENTICATE
@@ -230,7 +232,7 @@ makeMsgLenses ''Info ["target"]
 
 -- | > MODE <target> [<modestring> [<mode arguments>...]]
 type Mode = Msg "MODE" 
-    '[Either Channel Nickname, Maybe (ModeString, SList Text)]
+    '[Either Channel Nickname, Maybe ByteString]
 makeMsgLenses ''Mode ["target", "setter"]
 
 modeChannel :: Traversal' Mode Channel
@@ -239,12 +241,8 @@ modeChannel = modeTarget . _Left
 modeNick :: Traversal' Mode Nickname
 modeNick = modeTarget . _Right
 
-modeString :: Traversal' Mode ModeString
-modeString = modeSetter . _Just . _1
-
-modeParams :: Traversal' Mode [Text]
-modeParams = modeSetter . _Just . _2 . _Wrapped
-
+modeString :: ServerModes -> Fold Mode ModeStr
+modeString m = modeSetter . _Just . to (fetchModeStr m) . _Just
 
 -- Sending Messages
 -- | > PRIVMSG <target>{,<target>} <text to be sent>

@@ -15,16 +15,19 @@
 --
 -- **NOTE:** Because of size and a lack of test cases, this module is largely
 -- untested. Here be dragons!
-{-# Language DataKinds #-}
-{-# Language TemplateHaskell #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RankNTypes #-}
 module Network.Yak.Responses
 where
 
 import Control.Lens
 import Data.Text (Text)
 import Data.Void (Void)
+import Data.ByteString.Char8 (ByteString)
 import Data.Time.Clock.POSIX
 import Network.Yak.Types
+import Network.Yak.Modes
 import Network.Yak.TH
 
 type Client = Username
@@ -183,8 +186,11 @@ type RplListend = Msg "323" '[Client, Message]
 makeMsgLenses ''RplListend ["client", "message"]
 
 -- | > "<client> <channel> <modestring> <mode arguments>..."
-type RplChannelmodeis = Msg "324" '[Client, Channel, ModeString, SList Text]
-makeMsgLenses ''RplChannelmodeis ["client", "channel", "mode", "params"]
+type RplChannelmodeis = Msg "324" '[Client, Channel, ByteString]
+makeMsgLenses ''RplChannelmodeis ["client", "channel", "rawmode" ]
+
+rplChannelmodeisMode :: ServerModes -> Fold RplChannelmodeis ModeStr
+rplChannelmodeisMode m = rplChannelmodeisRawmode . to (fetchModeStr m) . _Just
 
 -- | > "<client> <channel> :No topic is set"
 type RplNotopic = Msg "331" '[Client, Channel, Message]
