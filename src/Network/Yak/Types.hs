@@ -251,7 +251,7 @@ instance Parameter POSIXTime where
 -- separator for 'PList'!
 newtype SList a = SList { getSList :: [a] }
     deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
-              Traversable, Monoid, Alternative)
+              Traversable, Monoid, Alternative, Generic)
 
 instance Wrapped (SList a) where
     type Unwrapped (SList a) = [a]
@@ -272,7 +272,7 @@ instance Parameter a => Parameter (SList a) where
 -- | Space separated lists after colon. Used in some numeric replies
 newtype CList a = CList { getCList :: [a] }
     deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
-              Traversable, Monoid, Alternative)
+              Traversable, Monoid, Alternative, Generic)
 
 instance Wrapped (CList a) where
     type Unwrapped (CList a) = [a]
@@ -410,7 +410,7 @@ buildPrefix :: Build '[] f => Prefix -> f
 buildPrefix p = build' (vacant & prefix .~ Just p)
 
 newtype Channel = Channel { getChannel :: Text }
-    deriving (Eq, Show, Ord, Read, IsString, Monoid)
+    deriving (Eq, Show, Ord, Read, IsString, Monoid, Generic)
 
 makeWrapped ''Channel
 
@@ -422,7 +422,7 @@ instance Parameter Channel where
         pure . Channel . T.pack $ mark : name
 
 newtype Message = Message { getMessage :: Text }
-    deriving (Eq, Show, Ord, Read, IsString, Monoid)
+    deriving (Eq, Show, Ord, Read, IsString, Monoid, Generic)
 
 makeWrapped ''Message
 
@@ -430,7 +430,7 @@ instance Parameter Message where
     render = render . T.cons ':' . getMessage
     seize  = Message . decodeUtf8 <$> (char ':' *> takeTill (inClass "\n"))
 
-newtype Modes = Modes { getModes :: [Char] }
+newtype Modes = Modes { getModes :: [Char] } deriving (Generic)
 
 makeWrapped ''Modes
 
