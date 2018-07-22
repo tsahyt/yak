@@ -16,6 +16,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Network.Yak.Types
 (
@@ -77,6 +78,7 @@ import Data.Kind (Type)
 import Data.Text.Encoding
 import Data.String
 import GHC.TypeLits
+import GHC.Generics
 import GHC.Exts (IsList (..))
 
 import qualified Data.Text as T
@@ -93,13 +95,13 @@ declareLenses [d|
         , hostUser :: Maybe Username
         , hostHost :: Maybe Hostname
         }
-        deriving (Eq, Show, Read, Ord)
+        deriving (Eq, Show, Read, Ord, Generic)
     |]
 
 data Prefix 
     = PrefixServer Text
     | PrefixUser Host
-    deriving (Eq, Show, Read, Ord)
+    deriving (Eq, Show, Read, Ord, Generic)
 
 -- | Proxy type for holding IRC messages
 data Msg command params = Msg
@@ -175,14 +177,14 @@ instance Parameter (PList '[]) where
     seize  = pure PNil
 
 -- | Proxy type for inserting special syntax
-data Unused (a :: Symbol) = Unused deriving (Show, Eq, Ord, Read)
+data Unused (a :: Symbol) = Unused deriving (Show, Eq, Ord, Read, Generic)
 
 instance KnownSymbol a => Parameter (Unused (a :: Symbol)) where
     render _ = B.pack . symbolVal $ Proxy @a
     seize = let x = B.pack $ symbolVal (Proxy @a) in Unused <$ string x
 
 -- | Type for expressing possibly missing flags.
-data Flag a = Set | Unset deriving (Show, Eq, Ord, Read)
+data Flag a = Set | Unset deriving (Show, Eq, Ord, Read, Generic)
 
 instance KnownSymbol a => Parameter (Flag (a :: Symbol)) where
     render Set   = B.pack . symbolVal $ Proxy @a
@@ -440,7 +442,7 @@ data Token
     = KeyValue Text Text
     | PositiveToken Text
     | NegativeToken Text
-    deriving (Eq, Show, Ord, Read)
+    deriving (Eq, Show, Ord, Read, Generic)
 
 makePrisms ''Token
 
@@ -464,7 +466,7 @@ declareLenses [d|
         , ureplyIsAway   :: Bool
         , ureplyHostname :: Hostname
         }
-        deriving (Eq, Show, Ord, Read)
+        deriving (Eq, Show, Ord, Read, Generic)
     |]
 
 instance Parameter UReply where
@@ -483,7 +485,7 @@ declareLenses [d|
         { memberPrefix :: Maybe Char
         , memberData :: a
         }
-        deriving (Eq, Show, Ord, Read)
+        deriving (Eq, Show, Ord, Read, Generic)
     |]
 
 instance Parameter a => Parameter (Member a) where

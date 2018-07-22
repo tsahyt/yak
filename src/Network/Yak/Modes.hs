@@ -9,6 +9,7 @@
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- | A small DSL for creating mode strings. The documentation contains parts
 -- from <https://modern.ircdocs.horse> only for quick reference. Please refer to
@@ -86,6 +87,7 @@ import Data.Foldable
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
 import Data.Void
+import GHC.Generics
 
 import qualified Data.Attoparsec.ByteString.Char8 as A
 import qualified Data.ByteString.Char8 as B
@@ -95,6 +97,7 @@ data ModeType
     | TypeB
     | TypeC
     | TypeD
+    deriving (Eq, Show, Ord, Read, Generic)
 
 -- | A mode is defined through a character and its type.
 --
