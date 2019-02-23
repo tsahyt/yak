@@ -1,5 +1,5 @@
 name:                yak
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            A strongly typed IRC library
 description:         See README.rst
 homepage:            https://github.com/tsahyt/yak#readme
