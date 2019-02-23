@@ -68,7 +68,6 @@ import Data.List.NonEmpty (NonEmpty(..))
 import Data.ByteString.Char8 (ByteString)
 import Data.Attoparsec.ByteString.Char8
 import Data.Text (Text)
-import Data.Monoid
 import Data.Void
 import Data.Maybe (fromMaybe)
 import Data.Word (Word)
@@ -251,7 +250,7 @@ instance Parameter POSIXTime where
 -- separator for 'PList'!
 newtype SList a = SList { getSList :: [a] }
     deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
-              Traversable, Monoid, Alternative, Generic)
+              Traversable, Semigroup, Monoid, Alternative, Generic)
 
 instance Wrapped (SList a) where
     type Unwrapped (SList a) = [a]
@@ -272,7 +271,7 @@ instance Parameter a => Parameter (SList a) where
 -- | Space separated lists after colon. Used in some numeric replies
 newtype CList a = CList { getCList :: [a] }
     deriving (Eq, Show, Ord, Read, Functor, Applicative, Monad, Foldable, 
-              Traversable, Monoid, Alternative, Generic)
+              Traversable, Semigroup, Monoid, Alternative, Generic)
 
 instance Wrapped (CList a) where
     type Unwrapped (CList a) = [a]
@@ -410,7 +409,7 @@ buildPrefix :: Build '[] f => Prefix -> f
 buildPrefix p = build' (vacant & prefix .~ Just p)
 
 newtype Channel = Channel { getChannel :: Text }
-    deriving (Eq, Show, Ord, Read, IsString, Monoid, Generic)
+    deriving (Eq, Show, Ord, Read, IsString, Semigroup, Monoid, Generic)
 
 makeWrapped ''Channel
 
@@ -422,7 +421,7 @@ instance Parameter Channel where
         pure . Channel . T.pack $ mark : name
 
 newtype Message = Message { getMessage :: Text }
-    deriving (Eq, Show, Ord, Read, IsString, Monoid, Generic)
+    deriving (Eq, Show, Ord, Read, IsString, Semigroup, Monoid, Generic)
 
 makeWrapped ''Message
 

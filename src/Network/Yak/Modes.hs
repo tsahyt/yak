@@ -82,7 +82,6 @@ import Control.Monad (guard)
 import Data.List.NonEmpty (NonEmpty)
 import Data.Attoparsec.ByteString.Char8 (Parser)
 import Data.ByteString.Char8 (ByteString)
-import Data.Semigroup
 import Data.Foldable
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
