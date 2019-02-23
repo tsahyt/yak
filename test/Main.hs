@@ -142,19 +142,19 @@ clientMsgs = describe "Client Messages" $ do
     describe "Mode" $ do
         it "has format 'MODE <target> [<modestring> [<mode arguments>..]]'" $ do
             "MODE dan +i\n" `shouldFetch`
-                Just (build (Right "dan") (Just ("+i", [])) :: Mode)
+                Just (build (Right "dan") (Just "+i\n") :: Mode)
 
             "MODE #foobar +mb *@127.0.0.1\n" `shouldFetch`
-                Just (build (Left "#foobar") (Just ("+mb", ["*@127.0.0.1"]))
+                Just (build (Left "#foobar") (Just "+mb *@127.0.0.1\n")
                          :: Mode)
 
             "MODE #foobar -bl+i *@192.168.0.1\n" `shouldFetch`
-                Just (build (Left "#foobar") (Just ("-bl+i", ["*@192.168.0.1"]))
+                Just (build (Left "#foobar") (Just ("-bl+i *@192.168.0.1\n"))
                          :: Mode)
 
             ":irc.example.com MODE #foobar +o bunny\n" `shouldFetch`
                 Just (buildPrefix (PrefixServer "irc.example.com")
-                          (Left "#foobar") (Just ("+o", ["bunny"])) :: Mode)
+                          (Left "#foobar") (Just ("+o bunny\n")) :: Mode)
 
     describe "Userhost" $ do
         it "takes space separated nicknames" $ do
