@@ -28,7 +28,6 @@ import Control.Applicative
 import Data.Attoparsec.ByteString.Char8
 import Data.ByteString.Char8 (ByteString)
 import Data.Maybe
-import Data.Monoid
 import Data.Proxy
 import Data.Text.Encoding
 import GHC.TypeLits

@@ -18,8 +18,8 @@ listParams name = do
     return $ go l
 
     where go :: Type -> [Type]
-          go (SigT PromotedNilT _) = []
-          go (SigT (AppT (AppT PromotedConsT x) xs) _) = x : go xs
+          go PromotedNilT = []
+          go (AppT (AppT PromotedConsT x) xs) = x : go xs
           go x = error $ "unexpected type: " ++ pprint x ++ "(" ++ show x ++ ")"
 
 lensName :: Name -> String -> Name
